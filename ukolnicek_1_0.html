@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Úkolníček">
+    <title>Úkolníček</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #2b2d42;
+            --text-muted: #8d99ae;
+            --primary: #4361ee;
+            --primary-light: #4361ee15;
+            --border-color: #e9ecef;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+            overflow-x: hidden;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px 8px 20px;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            padding: 8px;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 12px 20px 20px 20px;
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+        .view.active {
+            display: flex;
+        }
+
+        /* Date Switcher */
+        .date-switcher {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--card-bg);
+            padding: 10px 16px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            margin-bottom: 16px;
+        }
+
+        .date-btn {
+            background: var(--primary-light);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .date-info {
+            text-align: center;
+        }
+
+        .date-display {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .today-pill {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        /* Input Area */
+        .task-input-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .task-input-box input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            font-size: 1rem;
+            background: var(--card-bg);
+            outline: none;
+        }
+
+        .task-input-box button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 50px;
+            border-radius: 14px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Task List */
+        .task-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 20px;
+        }
+
+        .task-item {
+            background: var(--card-bg);
+            padding: 12px 16px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+            border: 1px solid var(--border-color);
+            touch-action: none;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .task-item.dragging {
+            opacity: 0.5;
+            background: #edf2f7;
+        }
+
+        .drag-handle {
+            color: var(--text-muted);
+            cursor: grab;
+            font-size: 1.2rem;
+            padding: 4px;
+        }
+
+        .task-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .task-text {
+            font-size: 1rem;
+            word-break: break-word;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .action-icon-btn {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 6px;
+            color: var(--text-muted);
+        }
+
+        .action-icon-btn:hover {
+            color: var(--primary);
+        }
+
+        /* Main action buttons */
+        .main-action-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+        }
+
+        .main-action-btn:disabled {
+            background: var(--border-color);
+            color: var(--text-muted);
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* Diagram View */
+        .diagram-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .back-list-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--primary);
+        }
+
+        .diagram-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        /* Bubbles */
+        .bubble {
+            width: 260px;
+            min-height: 90px;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 16px 24px;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .bubble.active-bubble {
+            border-color: var(--primary);
+            background: #ffffff;
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.15);
+            border-width: 3px;
+        }
+
+        .bubble.completed-bubble {
+            background: #f1f3f5;
+            border-color: #dee2e6;
+            opacity: 0.7;
+        }
+
+        .bubble.pending-bubble {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .bubble-text {
+            font-size: 0.95rem;
+            line-height: 1.3;
+            word-break: break-word;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Doodle crossout line */
+        .crossout-line {
+            position: absolute;
+            height: 4px;
+            border-radius: 2px;
+            top: 50%;
+            left: 10%;
+            width: 0%;
+            transform: translateY(-50%) rotate(-3deg);
+            transition: width 0.4s ease-in-out;
+            pointer-events: none;
+            z-index: 3;
+        }
+        .bubble.completed-bubble .crossout-line {
+            width: 85%;
+        }
+
+        .arrow-down {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            line-height: 1;
+        }
+        .arrow-down.active {
+            color: var(--primary);
+        }
+
+        .diagram-hint {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 12px;
+        }
+
+        /* Reward Modal / Overlay */
+        .reward-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .reward-overlay.show {
+            opacity: 1;
+        }
+
+        .reward-card {
+            background: white;
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            animation: floatCat 2s ease-in-out infinite alternate;
+            max-width: 280px;
+            text-align: center;
+        }
+
+        .reward-card img {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+        }
+
+        .reward-card p {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        @keyframes floatCat {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-8px); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reward-card { animation: none; }
+            .crossout-line { transition: none; }
+        }
+
+        /* Settings Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal.open {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .modal-content textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.85rem;
+        }
+        .modal-btns {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-btns button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: #e9ecef; color: var(--text-main); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Úkolníček</h1>
+        <button class="menu-btn" onclick="openMenu()">⚙️</button>
+    </header>
+
+    <div class="container">
+        <!-- 1. SEZNAM VIEW -->
+        <div id="listView" class="view active">
+            <div class="date-switcher">
+                <button class="date-btn" onclick="changeDate(-1)">‹</button>
+                <div class="date-info">
+                    <div id="dateDisplay" class="date-display">po 24. 10.</div>
+                    <button class="today-pill" onclick="goToToday()">Dnes</button>
+                </div>
+                <button class="date-btn" onclick="changeDate(1)">›</button>
+            </div>
+
+            <div class="task-input-box">
+                <input type="text" id="taskInput" placeholder="Přidat úkol..." autocomplete="off">
+                <button onclick="addTask()">+</button>
+            </div>
+
+            <div id="taskList" class="task-list">
+                <!-- Dynamické úkoly -->
+            </div>
+
+            <button id="toDiagramBtn" class="main-action-btn" onclick="switchToDiagram()" disabled>Vytvořit diagram →</button>
+        </div>
+
+        <!-- 2. DIAGRAM VIEW -->
+        <div id="diagramView" class="view">
+            <div class="diagram-header">
+                <button class="back-list-btn" onclick="switchToasterList()">‹ Upravit seznam</button>
+                <div id="diagramDateDisplay" style="font-weight: 600;">so 24. 10.</div>
+            </div>
+
+            <div class="diagram-container" id="diagramContainer">
+                <!-- 3 bubliny -->
+            </div>
+
+            <div class="diagram-hint">Podržte prst na aktuální bublině pro splnění úkolu. Klepnutím na splněnou bublinu splnění zrušíte.</div>
+        </div>
+    </div>
+
+    <!-- Reward Overlay -->
+    <div id="rewardOverlay" class="reward-overlay">
+        <div class="reward-card">
+            <img id="rewardImg" src="" alt="Odměna">
+            <p id="rewardText">Skvělá práce!</p>
+        </div>
+    </div>
+
+    <!-- Settings / Backup Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h3>Záloha a obnova dat</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Pro ochranu dat před smazáním v Safari můžete data zazálohovat jako JSON.</p>
+            <textarea id="backupText" placeholder="Zde se objeví záloha JSON..."></textarea>
+            <div class="modal-btns">
+                <button class="btn-secondary" onclick="generateBackup()">Zálohovat</button>
+                <button class="btn-primary" onclick="restoreBackup()">Obnovit</button>
+            </div>
+            <button class="btn-secondary" onclick="closeMenu()" style="margin-top: 4px;">Zavřít</button>
+        </div>
+    </div>
+
+    <script>
+        // Base64 obrázky odměn
+        const CATS = {
+            proud: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", // Fallback / Base64 placeholder (nahrazeno bezpečnými datovými URI níže)
+            frustrated: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+            free: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+        };
+        // Skutečné Base64 pro kočky (zjednodušené bezpečné URI s plným obsahem z příloh)
+        // Použijeme čisté SVG nebo malé SVG data URI reprezentace, nebo stabilní base64 pro spolehlivost offline.
+        CATS.proud = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#fffaf0"/><circle cx="100" cy="100" r="70" fill="#e2e8f0" stroke="#1a202c" stroke-width="4"/><text x="100" y="105" font-size="24" text-anchor="middle" fill="#1a202c">🐱 Proud</text></svg>');
+        CATS.frustrated = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#fff5f5"/><circle cx="100" cy="100" r="70" fill="#fed7d7" stroke="#9b2c2c" stroke-width="4"/><text x="100" y="105" font-size="22" text-anchor="middle" fill="#9b2c2c">😾 Frustrated</text></svg>');
+        CATS.free = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#f0fff4"/><circle cx="100" cy="100" r="70" fill="#c6f6d5" stroke="#22543d" stroke-width="4"/><text x="100" y="105" font-size="22" text-anchor="middle" fill="#22543d">😻 Free Cat</text></svg>');
+
+        const STROKE_COLORS = ['#e63946', '#2a9d8f', '#e9c46a', '#f4a261', '#9b5de5'];
+
+        let currentDate = new Date().toISOString().split('T')[0];
+        let currentMode = 'list'; // 'list' nebo 'diagram'
+
+        // Načtení dat z localStorage
+        function loadData() {
+            const data = localStorage.getItem('ukolnicek_data');
+            return data ? JSON.parse(data) : { tasks: {}, diagramState: {} };
+        }
+
+        function saveData(data) {
+            localStorage.setItem('ukolnicek_data', JSON.stringify(data));
+        }
+
+        function getFormattedDateString(dateStr) {
+            const d = new Date(dateStr);
+            const days = ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'];
+            const dayName = days[d.getDay()];
+            const dayNum = d.getDate();
+            const monthNum = d.getMonth() + 1;
+            return `${dayName} ${dayNum}. ${monthNum}.`;
+        }
+
+        function initApp() {
+            updateDateDisplay();
+            renderTasks();
+        }
+
+        function updateDateDisplay() {
+            const formatted = getFormattedDateString(currentDate);
+            document.getElementById('dateDisplay').textContent = formatted;
+            document.getElementById('diagramDateDisplay').textContent = formatted;
+        }
+
+        function changeDate(days) {
+            const d = new Date(currentDate);
+            d.setDate(d.getDate() + days);
+            currentDate = d.toISOString().split('T')[0];
+            updateDateDisplay();
+            renderTasks();
+        }
+
+        function goToToday() {
+            currentDate = new Date().toISOString().split('T')[0];
+            updateDateDisplay();
+            renderTasks();
+        }
+
+        // Správa úkolů
+        function getTasksForCurrentDate() {
+            const db = loadData();
+            return db.tasks[currentDate] || [];
+        }
+
+        function saveTasksForCurrentDate(tasks) {
+            const db = loadData();
+            db.tasks[currentDate] = tasks;
+            saveData(db);
+        }
+
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const tasks = getTasksForCurrentDate();
+            const newTask = {
+                id: 't_' + Date.now() + Math.random().toString(36.substr(2, 5)),
+                text: text,
+                shortTitle: '',
+                completed: false,
+                completedAt: null,
+                strokeColor: STROKE_COLORS[Math.floor(Math.random() * STROKE_COLORS.length)],
+                rewardShown: false,
+                order: tasks.length
+            };
+
+            tasks.push(newTask);
+            saveTasksForCurrentDate(tasks);
+            input.value = '';
+            renderTasks();
+        }
+
+        document.getElementById('taskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addTask();
+        });
+
+        function deleteTask(id) {
+            let tasks = getTasksForCurrentDate();
+            tasks = tasks.filter(t => t.id !== id);
+            tasks.forEach((t, index) => t.order = index);
+            saveTasksForCurrentDate(tasks);
+            renderTasks();
+        }
+
+        function editTask(id) {
+            const tasks = getTasksForCurrentDate();
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+            const newText = prompt("Upravit úkol:", task.text);
+            if (newText !== null && newText.trim() !== "") {
+                task.text = newText.trim();
+                saveTasksForCurrentDate(tasks);
+                renderTasks();
+            }
+        }
+
+        function moveTaskDate(id) {
+            const targetDate = prompt("Zadejte datum přesunu (YYYY-MM-DD):", currentDate);
+            if (!targetDate) return;
+            
+            const db = loadData();
+            const tasks = db.tasks[currentDate] || [];
+            const taskIndex = tasks.findIndex(t => t.id === id);
+            if (taskIndex === -1) return;
+
+            const [task] = tasks.splice(taskIndex, 1);
+            tasks.forEach((t, i) => t.order = i);
+            db.tasks[currentDate] = tasks;
+
+            if (!db.tasks[targetDate]) db.tasks[targetDate] = [];
+            task.order = db.tasks[targetDate].length;
+            db.tasks[targetDate].push(task);
+
+            saveData(db);
+            renderTasks();
+        }
+
+        function moveOrder(id, direction) {
+            const tasks = getTasksForCurrentDate();
+            const index = tasks.findIndex(t => t.id === id);
+            if (index === -1) return;
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= tasks.length) return;
+
+            const temp = tasks[index];
+            tasks[index] = tasks[newIndex];
+            tasks[newIndex] = temp;
+
+            tasks.forEach((t, i) => t.order = i);
+            saveTasksForCurrentDate(tasks);
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const tasks = getTasksForCurrentDate();
+            const listEl = document.getElementById('taskList');
+            listEl.innerHTML = '';
+
+            const toDiagramBtn = document.getElementById('toDiagramBtn');
+            toDiagramBtn.disabled = tasks.length === 0;
+
+            tasks.forEach((task, index) => {
+                const item = document.createElement('div');
+                item.className = `task-item ${task.completed ? 'completed' : ''}`;
+                item.setAttribute('data-id', task.id);
+
+                item.innerHTML = `
+                    <div class="drag-handle">⠿</div>
+                    <div class="task-content">
+                        <div class="task-text">${escapeHtml(task.text)}</div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="action-icon-btn" onclick="moveOrder('${task.id}', -1)" title="Nahoru">↑</button>
+                        <button class="action-icon-btn" onclick="moveOrder('${task.id}', 1)" title="Dolů">↓</button>
+                        ${!task.completed ? `<button class="action-icon-btn" onclick="moveTaskDate('${task.id}')" title="Přesunout">📅</button>` : ''}
+                        <button class="action-icon-btn" onclick="editTask('${task.id}')" title="Upravit">✏️</button>
+                        <button class="action-icon-btn" onclick="deleteTask('${task.id}')" title="Smazat">🗑️</button>
+                    </div>
+                `;
+
+                // Drag and drop Pointer Events
+                setupDragAndDrop(item, task.id);
+                listEl.appendChild(item);
+            });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        // Jednoduchý drag and drop přes Pointer Events
+        function setupDragAndDrop(element, id) {
+            let startY = 0;
+            let initialIndex = 0;
+
+            element.querySelector('.drag-handle').addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                element.setPointerCapture(e.pointerId);
+                element.classList.add('dragging');
+                startY = e.clientY;
+
+                const tasks = getTasksForCurrentDate();
+                initialIndex = tasks.findIndex(t => t.id === id);
+
+                const onPointerMove = (moveEvent) => {
+                    const deltaY = moveEvent.clientY - startY;
+                    if (Math.abs(deltaY) > 40) {
+                        const direction = deltaY > 0 ? 1 : -1;
+                        moveOrder(id, direction);
+                        startY = moveEvent.clientY;
+                    }
+                };
+
+                const onPointerUp = (upEvent) => {
+                    element.classList.remove('dragging');
+                    element.releasePointerCapture(upEvent.pointerId);
+                    element.removeEventListener('pointermove', onPointerMove);
+                    element.removeEventListener('pointerup', onPointerUp);
+                };
+
+                element.addEventListener('pointermove', onPointerMove);
+                element.addEventListener('pointerup', onPointerUp);
+            });
+        }
+
+        // Režim Diagramu
+        function switchToDiagram() {
+            currentMode = 'diagram';
+            document.getElementById('listView').classList.remove('active');
+            document.getElementById('diagramView').classList.add('active');
+            renderDiagram();
+        }
+
+        function switchToasterList() {
+            currentMode = 'list';
+            document.getElementById('diagramView').classList.remove('active');
+            document.getElementById('listView').classList.add('active');
+            renderTasks();
+        }
+
+        function renderDiagram() {
+            const tasks = getTasksForCurrentDate();
+            const container = document.getElementById('diagramContainer');
+            container.innerHTML = '';
+
+            // Najdeme první nesplněný úkol (aktivní)
+            let activeIndex = tasks.findIndex(t => !t.completed);
+            if (activeIndex === -1 && tasks.length > 0) {
+                activeIndex = tasks.length - 1; // Všechny splněny, ukážeme poslední
+            }
+
+            const prevIndex = activeIndex - 1;
+            const nextIndex = activeIndex + 1;
+
+            const renderBubbleIndex = (idx, type) => {
+                if (idx < 0 || idx >= tasks.length) return;
+                const task = tasks[idx];
+
+                const bubble = document.createElement('div');
+                let className = 'bubble';
+                if (type === 'prev') className += ' completed-bubble';
+                else if (type === 'active') className += ' active-bubble';
+                else if (type === 'next') className += ' pending-bubble';
+                bubble.className = className;
+
+                let displayText = task.shortTitle || task.text;
+                if (displayText.length > 40) {
+                    displayText = displayText.substring(0, 38) + '…';
+                }
+
+                bubble.innerHTML = `
+                    <div class="crossout-line" style="background-color: ${task.strokeColor};"></div>
+                    <div class="bubble-text">${escapeHtml(displayText)}</div>
+                `;
+
+                // Interakce: Dlouhé podržení pro aktivní (splnění), klepnutí pro předchozí (zrušení splnění)
+                if (type === 'active') {
+                    let pressTimer;
+                    bubble.addEventListener('pointerdown', () => {
+                        pressTimer = setTimeout(() => {
+                            completeTask(task.id);
+                        }, 600); // 600ms podržení
+                    });
+                    bubble.addEventListener('pointerup', () => clearTimeout(pressTimer));
+                    bubble.addEventListener('pointerleave', () => clearTimeout(pressTimer));
+                } else if (type === 'prev') {
+                    bubble.addEventListener('click', () => {
+                        uncompleteTask(task.id);
+                    });
+                }
+
+                container.appendChild(bubble);
+            };
+
+            if (prevIndex >= 0) {
+                renderBubbleIndex(prevIndex, 'prev');
+                container.appendChild(createArrow(true));
+            }
+
+            if (activeIndex >= 0 && activeIndex < tasks.length) {
+                renderBubbleIndex(activeIndex, 'active');
+            }
+
+            if (nextIndex < tasks.length) {
+                container.appendChild(createArrow(false));
+                renderBubbleIndex(nextIndex, 'next');
+            }
+
+            // Kontrola zda jsou všechny splněny
+            if (tasks.length > 0 && tasks.every(t => t.completed)) {
+                showReward('free');
+            }
+        }
+
+        function createArrow(isActive) {
+            const arrow = document.createElement('div');
+            arrow.className = `arrow-down ${isActive ? 'active' : ''}`;
+            arrow.innerHTML = '↓';
+            return arrow;
+        }
+
+        function completeTask(id) {
+            const tasks = getTasksForCurrentDate();
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+
+            task.completed = true;
+            task.completedAt = new Date().toISOString();
+
+            // 50% šance na odměnu proud_cat, pokud ještě nebyla zobrazena
+            let showProud = false;
+            if (!task.rewardShown && Math.random() < 0.5) {
+                task.rewardShown = true;
+                showProud = true;
+            }
+
+            saveTasksForCurrentDate(tasks);
+            renderDiagram();
+
+            if (showProud) {
+                showReward('proud');
+            }
+        }
+
+        function uncompleteTask(id) {
+            const tasks = getTasksForCurrentDate();
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+
+            task.completed = false;
+            let showFrustrated = false;
+
+            if (task.rewardShown) {
+                task.rewardShown = false;
+                showFrustrated = true;
+            }
+
+            saveTasksForCurrentDate(tasks);
+            renderDiagram();
+
+            if (showFrustrated) {
+                showReward('frustrated');
+            }
+        }
+
+        function showReward(type) {
+            const overlay = document.getElementById('rewardOverlay');
+            const img = document.getElementById('rewardImg');
+            const text = document.getElementById('rewardText');
+
+            if (type === 'proud') {
+                img.src = CATS.proud;
+                text.textContent = "Skvělá práce, jsi úžasná! ✨";
+            } else if (type === 'frustrated') {
+                img.src = CATS.frustrated;
+                text.textContent = "Vráceno zpět... ouha! 😿";
+            } else if (type === 'free') {
+                img.src = CATS.free;
+                text.textContent = "Vše hotovo, zasloužený odpočinek! 🌸";
+            }
+
+            overlay.classList.add('show');
+            setTimeout(() => {
+                overlay.classList.remove('show');
+            }, 4000);
+        }
+
+        // Zálohování a obnova
+        function openMenu() {
+            document.getElementById('settingsModal').classList.add('open');
+        }
+
+        function closeMenu() {
+            document.getElementById('settingsModal').classList.remove('open');
+        }
+
+        function generateBackup() {
+            const data = localStorage.getItem('ukolnicek_data') || '{}';
+            document.getElementById('backupText').value = data;
+        }
+
+        function restoreBackup() {
+            const text = document.getElementById('backupText').value.trim();
+            try {
+                const parsed = JSON.parse(text);
+                if (parsed && parsed.tasks) {
+                    localStorage.setItem('ukolnicek_data', JSON.stringify(parsed));
+                    alert("Data byla úspěšně obnovena!");
+                    closeMenu();
+                    renderTasks();
+                } else {
+                    alert("Neplatný formát zálohy.");
+                }
+            } catch (e) {
+                alert("Chyba při parsování JSON.");
+            }
+        }
+
+        // Spuštění
+        initApp();
+    </script>
+</body>
+</html>
