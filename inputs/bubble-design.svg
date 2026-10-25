@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 160" width="220" height="160" aria-label="Návrh tvaru bubliny">
+  <rect width="220" height="160" fill="#F6F7FB"/>
+  <path d="M 16 80
+           C 16 38, 44 18, 78 16
+           C 112 14, 150 18, 180 25
+           C 205 31, 205 56, 204 76
+           C 205 98, 192 122, 167 134
+           C 142 146, 103 147, 76 139
+           C 44 130, 18 108, 16 80 Z"
+        fill="white"
+        stroke="#1B1B24"
+        stroke-width="3"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>

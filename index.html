@@ -360,6 +360,17 @@
       font-size: 1.1rem;
     }
 
+    .task-delete-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(217, 98, 98, 0.08);
+      color: var(--danger);
+      font-size: 1.08rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
     .task-move-up, .task-move-down {
       width: 30px;
       height: 30px;
@@ -473,6 +484,16 @@
       min-height: 420px;
     }
 
+    .scene-connectors {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: visible;
+    }
+
     .diagram-bubble {
       position: absolute;
       display: flex;
@@ -482,6 +503,7 @@
       user-select: none;
       touch-action: manipulation;
       transition: transform 0.25s ease, opacity 0.25s ease;
+      z-index: 2;
     }
 
     .diagram-bubble[data-role="done"] {
@@ -532,22 +554,6 @@
 
     .diagram-bubble[data-role="done"] .bubble-svg path:first-child {
       fill: rgba(255,255,255,0.75);
-    }
-
-    .bubble-connector {
-      position: absolute;
-      width: 120px;
-      height: 60px;
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    .connector{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      overflow:visible;
     }
 
     .diagram-hint {
@@ -1024,6 +1030,7 @@
               <button class="small-icon-btn task-move-up" data-task-id="${task.id}" aria-label="Posunout nahoru">↑</button>
               <button class="small-icon-btn task-move-down" data-task-id="${task.id}" aria-label="Posunout dolů">↓</button>
               <button class="move-day-btn" data-move-id="${task.id}" aria-label="Přesunout na jiný den">📅</button>
+              <button class="task-delete-btn" data-delete-id="${task.id}" aria-label="Smazat úkol">✕</button>
             </div>
           </div>
         `;
@@ -1099,8 +1106,9 @@
       if (current) list.push({ task: current, role: 'current' });
       if (next && next.id !== current?.id) list.push({ task: next, role: 'next' });
 
+      const connectors = renderSceneConnectors();
       const bubbles = list.map((entry, index) => renderBubble(entry.task, entry.role, index, list.length)).join('');
-      els.diagramArea.innerHTML = `<div class="bubble-scene">${bubbles}</div>`;
+      els.diagramArea.innerHTML = `<div class="bubble-scene">${connectors}${bubbles}</div>`;
 
       els.diagramArea.querySelectorAll('.diagram-bubble').forEach(bubble => {
         const taskId = bubble.dataset.taskId;
@@ -1113,83 +1121,78 @@
     }
 
     function renderBubble(task, role, index, total) {
-      const width = role === 'current' ? 252 : 222;
-      const height = role === 'current' ? 176 : 154;
       const isDone = role === 'done';
-      const path = generateBubblePath(width, height, task.shapeSeed || 1);
-      const strokeColor = isDone ? '#7D8096' : '#1B1B24';
-      const strokeWidth = role === 'current' ? 4 : role === 'next' ? 2.8 : 2.3;
+      const config = {
+        done: { width: 166, height: 122, left: 18, top: 26, stroke: '#7D8096', strokeWidth: 2.3, fontSize: '0.84rem' },
+        current: { width: 190, height: 146, left: 188, top: 136, stroke: '#1B1B24', strokeWidth: 4, fontSize: '0.96rem' },
+        next: { width: 168, height: 124, left: 36, top: 286, stroke: '#1B1B24', strokeWidth: 2.8, fontSize: '0.8rem' }
+      };
+
+      const spec = config[role] || config.current;
+      const width = spec.width;
+      const height = spec.height;
+      const path = generateBubblePath(width, height, task.shapeSeed || 1, role);
       const textColor = isDone ? '#4A4D63' : '#23243A';
-      const label = task.shortTitle && String(task.shortTitle).trim().length ? task.shortTitle : shortenText(task.text, role === 'current' ? 26 : 20);
-      const styleLeft = role === 'current' ? 'calc(50% - 130px)' : role === 'done' ? '10%' : '18%';
-      const styleTop = role === 'done' ? '7%' : role === 'current' ? '36%' : '62%';
+      const label = task.shortTitle && String(task.shortTitle).trim().length ? task.shortTitle : shortenText(task.text, role === 'current' ? 26 : 18);
+      const style = `left:${spec.left}px; top:${spec.top}px; width:${width}px; height:${height}px;`;
       const svg = `
         <svg class="bubble-svg" viewBox="0 0 ${width} ${height}" aria-hidden="true">
-          <path d="${path}" fill="rgba(255,255,255,0.96)" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="${path}" fill="rgba(255,255,255,0.96)" stroke="${spec.stroke}" stroke-width="${spec.strokeWidth}" stroke-linecap="round" stroke-linejoin="round" />
           ${isDone ? renderHatch(task, width, height) : ''}
         </svg>
       `;
 
-      const style = `left:${styleLeft}; top:${styleTop}; width:${width}px; height:${height}px;`;
-      const lineMarkup = renderConnectorMarkup(role, total, index, width, height);
       return `
         <div class="diagram-bubble" data-task-id="${task.id}" data-role="${role}" style="${style}">
-          ${lineMarkup}
           ${svg}
-          <div class="bubble-label" style="color:${textColor};">${escapeHtml(label)}</div>
+          <div class="bubble-label" style="color:${textColor}; font-size:${spec.fontSize};">${escapeHtml(label)}</div>
         </div>
       `;
     }
 
-    function renderConnectorMarkup(role, total, index, width, height) {
-      if (role === 'done') return '';
-      if (role === 'current') {
-        const line = `
-          <svg class="connector" viewBox="0 0 120 80" preserveAspectRatio="none">
-            <path d="M 10 52 Q 58 18, 110 42" fill="none" stroke="${role === 'current' ? '#1B1B24' : '#B3B7C8'}" stroke-width="3.5" stroke-linecap="round"/>
-            <path d="M 93 34 L 110 42 L 95 55" fill="none" stroke="${role === 'current' ? '#1B1B24' : '#B3B7C8'}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        `;
-        return `<div class="bubble-connector" style="left:${width}px; top:${height*0.5 - 32}px;">${line}</div>`;
-      }
-      return '';
+    function renderSceneConnectors() {
+      return `
+        <svg class="scene-connectors" viewBox="0 0 390 420" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <marker id="arrowDark" viewBox="0 0 12 12" refX="9.5" refY="6" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 12 6 L 0 12" fill="none" stroke="#1B1B24" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+            </marker>
+          </defs>
+          <path d="M 172 110 C 198 122, 210 138, 218 152" fill="none" stroke="#1B1B24" stroke-width="2.4" stroke-linecap="round" marker-end="url(#arrowDark)"/>
+          <path d="M 248 268 C 228 287, 206 294, 174 300" fill="none" stroke="#1B1B24" stroke-width="2.4" stroke-linecap="round" marker-end="url(#arrowDark)"/>
+        </svg>
+      `;
     }
 
     function renderHatch(task, width, height) {
       const rand = generateRandom(Math.floor(task.hatchSeed || 1));
       const color = task.color || '#E8836B';
       const lines = [];
-      for (let i = 0; i < 6; i++) {
-        const startX = -10 + rand() * 16;
-        const startY = 18 + rand() * (height - 34);
-        const endX = width + 14 + rand() * 22;
-        const endY = 10 + rand() * (height - 18);
-        const opacity = 0.7 + rand() * 0.2;
-        lines.push(`<line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="${color}" stroke-width="3.2" stroke-linecap="round" opacity="${opacity}" />`);
+      const count = 7;
+      for (let i = 0; i < count; i++) {
+        const y = 18 + i * (height - 28) / count + rand() * 10;
+        const startX = -8 + rand() * 10;
+        const endX = width + 12 + rand() * 18;
+        const endY = y + 12 + rand() * 18;
+        const lineWidth = 2.8 + rand() * 1.0;
+        const opacity = 0.72 + rand() * 0.18;
+        lines.push(`<line x1="${startX}" y1="${y}" x2="${endX}" y2="${endY}" stroke="${color}" stroke-width="${lineWidth}" stroke-linecap="round" opacity="${opacity}" />`);
       }
       return `<g>${lines.join('')}</g>`;
     }
 
-    function generateBubblePath(width, height, seed) {
-      const rand = generateRandom(Math.floor(seed || 1));
-      const leftBias = 18 + rand() * 18;
-      const rightBias = 18 + rand() * 18;
-      const topBias = 18 + rand() * 18;
-      const bottomBias = 18 + rand() * 18;
-      const topMid = 4 + rand() * 14;
-      const rightMid = 6 + rand() * 12;
-      const bottomMid = 8 + rand() * 14;
-      const leftMid = 8 + rand() * 12;
+    function generateBubblePath(width, height, seed, role = 'current') {
+      const sx = width / 220;
+      const sy = height / 160;
 
       return [
-        `M ${leftBias} ${height / 2}`,
-        `Q 0 ${topBias + 12}, ${leftBias + 4} 0`,
-        `Q ${width * 0.35} ${-topMid}, ${width / 2} ${-10 - rand() * 8}`,
-        `Q ${width - rightBias - 6} ${topBias}, ${width - rightBias} ${height / 2}`,
-        `Q ${width} ${height * 0.62 + rightMid}, ${width - rightMid} ${height - bottomBias}`,
-        `Q ${width * 0.7} ${height + bottomMid}, ${width * 0.42} ${height - 2}`,
-        `Q ${leftBias + 10} ${height}, ${leftMid} ${height / 2}`,
-        'Z'
+        `M ${16 * sx} ${80 * sy}`,
+        `C ${16 * sx} ${38 * sy}, ${44 * sx} ${18 * sy}, ${78 * sx} ${16 * sy}`,
+        `C ${112 * sx} ${14 * sy}, ${150 * sx} ${18 * sy}, ${180 * sx} ${25 * sy}`,
+        `C ${205 * sx} ${31 * sy}, ${205 * sx} ${56 * sy}, ${204 * sx} ${76 * sy}`,
+        `C ${205 * sx} ${98 * sy}, ${192 * sx} ${122 * sy}, ${167 * sx} ${134 * sy}`,
+        `C ${142 * sx} ${146 * sy}, ${103 * sx} ${147 * sy}, ${76 * sx} ${139 * sy}`,
+        `C ${44 * sx} ${130 * sy}, ${18 * sx} ${108 * sy}, ${16 * sx} ${80 * sy} Z`
       ].join(' ');
     }
 
@@ -1327,6 +1330,20 @@
         const taskMoveDown = event.target.closest('.task-move-down');
         if (taskMoveDown) {
           moveTaskInOrder(taskMoveDown.dataset.taskId, 'down');
+          return;
+        }
+
+        const taskDelete = event.target.closest('.task-delete-btn');
+        if (taskDelete) {
+          const taskId = taskDelete.dataset.deleteId;
+          const task = findTaskById(taskId);
+          if (!task) return;
+          const ok = window.confirm(`Smazat úkol "${task.text}"?`);
+          if (!ok) return;
+          state.tasks = state.tasks.filter(item => item.id !== taskId);
+          saveState();
+          renderList();
+          renderDiagram();
           return;
         }
 
