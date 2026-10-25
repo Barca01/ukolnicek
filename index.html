@@ -740,7 +740,7 @@
         <div class="progress-bar"><span id="progressFill"></span></div>
       </div>
       <div id="diagramArea" class="diagram-area" aria-live="polite"></div>
-      <div class="diagram-hint">Dvojitým klepnutím na bublinu úkol splníš.</div>
+      <div class="diagram-hint">Klepnutím na bublinu se úkol splní.</div>
     </section>
   </div>
 
@@ -1132,9 +1132,9 @@
     function renderBubble(task, role, index, total) {
       const isDone = role === 'done';
       const config = {
-        done: { width: 166, height: 122, left: 18, top: 26, stroke: '#7D8096', strokeWidth: 2.3, fontSize: '0.84rem' },
-        current: { width: 190, height: 146, left: 188, top: 136, stroke: '#1B1B24', strokeWidth: 4, fontSize: '0.96rem' },
-        next: { width: 168, height: 124, left: 36, top: 286, stroke: '#1B1B24', strokeWidth: 2.8, fontSize: '0.8rem' }
+        done: { width: 154, height: 116, left: 6, top: 8, stroke: '#7D8096', strokeWidth: 2.3, fontSize: '0.84rem' },
+        current: { width: 176, height: 136, left: 44, top: 31, stroke: '#1B1B24', strokeWidth: 4, fontSize: '0.96rem' },
+        next: { width: 154, height: 116, left: 12, top: 63, stroke: '#1B1B24', strokeWidth: 2.8, fontSize: '0.8rem' }
       };
 
       const spec = config[role] || config.current;
@@ -1143,7 +1143,7 @@
       const path = generateBubblePath(width, height, task.shapeSeed || 1, role);
       const textColor = isDone ? '#4A4D63' : '#23243A';
       const label = task.shortTitle && String(task.shortTitle).trim().length ? task.shortTitle : shortenText(task.text, role === 'current' ? 26 : 18);
-      const style = `left:${spec.left}px; top:${spec.top}px; width:${width}px; height:${height}px;`;
+      const style = `left:${spec.left}%; top:${spec.top}%; width:${width}px; height:${height}px;`;
       const svg = `
         <svg class="bubble-svg" viewBox="0 0 ${width} ${height}" aria-hidden="true">
           <path d="${path}" fill="rgba(255,255,255,0.96)" stroke="${spec.stroke}" stroke-width="${spec.strokeWidth}" stroke-linecap="round" stroke-linejoin="round" />
