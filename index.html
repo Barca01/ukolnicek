@@ -1106,7 +1106,9 @@
       if (current) list.push({ task: current, role: 'current' });
       if (next && next.id !== current?.id) list.push({ task: next, role: 'next' });
 
-      const connectors = renderSceneConnectors();
+      const hasPrevious = Boolean(previous && previous.id !== current?.id);
+      const hasNext = Boolean(next && next.id !== current?.id);
+      const connectors = renderSceneConnectors(hasPrevious, hasNext);
       const bubbles = list.map((entry, index) => renderBubble(entry.task, entry.role, index, list.length)).join('');
       els.diagramArea.innerHTML = `<div class="bubble-scene">${connectors}${bubbles}</div>`;
 
@@ -1132,9 +1134,9 @@
     function renderBubble(task, role, index, total) {
       const isDone = role === 'done';
       const config = {
-        done: { width: 154, height: 116, left: 6, top: 8, stroke: '#7D8096', strokeWidth: 2.3, fontSize: '0.84rem' },
-        current: { width: 176, height: 136, left: 44, top: 31, stroke: '#1B1B24', strokeWidth: 4, fontSize: '0.96rem' },
-        next: { width: 154, height: 116, left: 12, top: 63, stroke: '#1B1B24', strokeWidth: 2.8, fontSize: '0.8rem' }
+        done: { width: 154, height: 116, left: -6, top: 8, stroke: '#7D8096', strokeWidth: 2.3, fontSize: '0.84rem' },
+        current: { width: 176, height: 136, left: 48, top: 31, stroke: '#1B1B24', strokeWidth: 4, fontSize: '0.96rem' },
+        next: { width: 154, height: 116, left: 0, top: 63, stroke: '#1B1B24', strokeWidth: 2.8, fontSize: '0.8rem' }
       };
 
       const spec = config[role] || config.current;
@@ -1159,13 +1161,20 @@
       `;
     }
 
-    function renderSceneConnectors() {
+    function renderSceneConnectors(hasPrevious, hasNext) {
+      const leftArrow = hasPrevious ? `
+        <path d="M 156 110 C 182 122, 194 138, 202 152" fill="none" stroke="#1B1B24" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M 196 147 L 202 152 L 196 157" fill="none" stroke="#1B1B24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      ` : '';
+
+      const rightArrow = hasNext ? `
+        <path d="M 232 268 C 212 287, 190 294, 158 300" fill="none" stroke="#1B1B24" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M 164 296 L 158 300 L 164 304" fill="none" stroke="#1B1B24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      ` : '';
+
       return `
         <svg class="scene-connectors" viewBox="0 0 390 420" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M 172 110 C 198 122, 210 138, 218 152" fill="none" stroke="#1B1B24" stroke-width="2.4" stroke-linecap="round"/>
-          <path d="M 212 147 L 218 152 L 212 157" fill="none" stroke="#1B1B24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M 248 268 C 228 287, 206 294, 174 300" fill="none" stroke="#1B1B24" stroke-width="2.4" stroke-linecap="round"/>
-          <path d="M 180 296 L 174 300 L 180 304" fill="none" stroke="#1B1B24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          ${leftArrow}${rightArrow}
         </svg>
       `;
     }
@@ -1209,10 +1218,10 @@
       if (task.done) {
         task.done = false;
         task.doneAt = null;
-        if (task.rewardShown) {
-          showReward('sad');
-          task.rewardShown = false;
-        }
+        // if (task.rewardShown) {
+        //   showReward('sad');
+        //   task.rewardShown = false;
+        // }
       } else {
         task.done = true;
         task.doneAt = new Date().toISOString();
