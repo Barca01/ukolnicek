@@ -1,962 +1,1526 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Úkolníček">
-    <title>Úkolníček</title>
-    <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-main: #2b2d42;
-            --text-muted: #8d99ae;
-            --primary: #4361ee;
-            --primary-light: #4361ee15;
-            --border-color: #e9ecef;
-            --safe-top: env(safe-area-inset-top);
-            --safe-bottom: env(safe-area-inset-bottom);
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Úkolníček">
+  <title>Úkolníček</title>
+  <style>
+    :root {
+      --bg: #F6F7FB;
+      --paper: #FFFFFF;
+      --paper-2: #F3F5FB;
+      --text: #23243A;
+      --muted: #6B718A;
+      --line: #E3E5EF;
+      --indigo: #4A4FB8;
+      --indigo-soft: rgba(74, 79, 184, 0.12);
+      --grid: #DCE6F2;
+      --black: #1B1B24;
+      --gray: #7D8096;
+      --gray-text: #4A4D63;
+      --shadow: rgba(35, 36, 58, 0.08);
+      --danger: #D96262;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+      --safe-left: env(safe-area-inset-left);
+      --safe-right: env(safe-area-inset-right);
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding-top: var(--safe-top);
-            padding-bottom: var(--safe-bottom);
-            overflow-x: hidden;
-        }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Nunito", "Avenir Next", "Segoe UI", ui-rounded, system-ui, sans-serif;
+      overscroll-behavior: none;
+    }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px 8px 20px;
-        }
+    body {
+      min-height: 100vh;
+      padding-top: calc(var(--safe-top) + 8px);
+      padding-bottom: calc(var(--safe-bottom) + 12px);
+      padding-left: calc(var(--safe-left) + 12px);
+      padding-right: calc(var(--safe-right) + 12px);
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
 
-        h1 {
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
+    button, input {
+      font: inherit;
+    }
 
-        .menu-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            padding: 8px;
-            cursor: pointer;
-            color: var(--text-main);
-        }
+    button {
+      border: none;
+      background: none;
+      color: inherit;
+    }
 
-        .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 12px 20px 20px 20px;
-            max-width: 500px;
-            width: 100%;
-            margin: 0 auto;
-        }
+    #app {
+      width: min(100%, 420px);
+      margin: 0 auto;
+      min-height: calc(100vh - (var(--safe-top) + var(--safe-bottom) + 18px));
+      position: relative;
+    }
 
-        /* Views */
-        .view {
-            display: none;
-            flex-direction: column;
-            flex: 1;
-        }
-        .view.active {
-            display: flex;
-        }
+    .view {
+      display: none;
+      min-height: 100%;
+    }
 
-        /* Date Switcher */
-        .date-switcher {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--card-bg);
-            padding: 10px 16px;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            margin-bottom: 16px;
-        }
+    .view.active {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
 
-        .date-btn {
-            background: var(--primary-light);
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            color: var(--primary);
-            cursor: pointer;
-        }
+    .list-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      position: relative;
+    }
 
-        .date-info {
-            text-align: center;
-        }
+    .list-header {
+      position: relative;
+      padding: 8px 4px 0;
+      display: flex;
+      justify-content: flex-end;
+      z-index: 30;
+    }
 
-        .date-display {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
+    .menu-button {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      font-size: 1.6rem;
+      line-height: 1;
+      background: transparent;
+    }
 
-        .today-pill {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 2px 10px;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            margin-top: 2px;
-            cursor: pointer;
-        }
+    .menu-wrapper {
+      position: relative;
+    }
 
-        /* Input Area */
-        .task-input-box {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
+    .menu-panel {
+      position: absolute;
+      right: 0;
+      top: 46px;
+      background: rgba(255,255,255,0.97);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 10px 22px rgba(35, 36, 58, 0.12);
+      min-width: 180px;
+      overflow: hidden;
+      z-index: 50;
+    }
 
-        .task-input-box input {
-            flex: 1;
-            padding: 14px 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            font-size: 1rem;
-            background: var(--card-bg);
-            outline: none;
-        }
+    .menu-panel.hidden,
+    .modal.hidden,
+    .reward-overlay.hidden {
+      display: none;
+    }
 
-        .task-input-box button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            width: 50px;
-            border-radius: 14px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    .menu-item {
+      width: 100%;
+      text-align: left;
+      padding: 14px 16px;
+      font-size: 0.98rem;
+      color: var(--text);
+      background: transparent;
+    }
 
-        /* Task List */
-        .task-list {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 16px;
-            padding-bottom: 20px;
-        }
+    .menu-item + .menu-item {
+      border-top: 1px solid var(--line);
+    }
 
-        .task-item {
-            background: var(--card-bg);
-            padding: 12px 16px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
-            border: 1px solid var(--border-color);
-            touch-action: none;
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
+    .date-switcher {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 0 18px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(227, 229, 239, 0.9);
+      border-radius: 18px;
+      box-shadow: 0 1px 6px rgba(35, 36, 58, 0.03);
+      min-height: 58px;
+    }
 
-        .task-item.dragging {
-            opacity: 0.5;
-            background: #edf2f7;
-        }
+    .nav-button {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--indigo-soft);
+      color: var(--indigo);
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
 
-        .drag-handle {
-            color: var(--text-muted);
-            cursor: grab;
-            font-size: 1.2rem;
-            padding: 4px;
-        }
+    .date-label-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+      text-align: center;
+    }
 
-        .task-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
+    .date-label {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
 
-        .task-text {
-            font-size: 1rem;
-            word-break: break-word;
-        }
+    .today-button {
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: var(--indigo);
+      color: white;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      min-width: 64px;
+    }
 
-        .task-item.completed .task-text {
-            text-decoration: line-through;
-            color: var(--text-muted);
-        }
+    .task-input-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
 
-        .task-actions {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
+    .task-input {
+      flex: 1;
+      min-width: 0;
+      height: 52px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.92);
+      padding: 0 16px;
+      font-size: 1.04rem;
+      color: var(--text);
+      outline: none;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+    }
 
-        .action-icon-btn {
-            background: none;
-            border: none;
-            font-size: 1.1rem;
-            cursor: pointer;
-            padding: 6px;
-            color: var(--text-muted);
-        }
+    .task-input::placeholder {
+      color: rgba(35, 36, 58, 0.42);
+    }
 
-        .action-icon-btn:hover {
-            color: var(--primary);
-        }
+    .add-button {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: var(--indigo);
+      color: white;
+      font-size: 1.9rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      box-shadow: 0 10px 18px rgba(74, 79, 184, 0.2);
+    }
 
-        /* Main action buttons */
-        .main-action-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 16px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            width: 100%;
-            cursor: pointer;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
-        }
+    .add-button.disabled {
+      opacity: 0.45;
+      box-shadow: none;
+    }
 
-        .main-action-btn:disabled {
-            background: var(--border-color);
-            color: var(--text-muted);
-            box-shadow: none;
-            cursor: not-allowed;
-        }
+    .task-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 0 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 100px;
+      -webkit-overflow-scrolling: touch;
+    }
 
-        /* Diagram View */
-        .diagram-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
+    .task-item {
+      background: rgba(255,255,255,0.93);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 10px 12px 10px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 58px;
+      box-shadow: 0 2px 8px rgba(35, 36, 58, 0.02);
+      touch-action: pan-y;
+      user-select: none;
+    }
 
-        .back-list-btn {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            color: var(--primary);
-        }
+    .task-item.dragging {
+      opacity: 0.55;
+    }
 
-        .diagram-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            position: relative;
-            padding: 20px 0;
-        }
+    .drag-handle {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(35, 36, 58, 0.5);
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
 
-        /* Bubbles */
-        .bubble {
-            width: 260px;
-            min-height: 90px;
-            background: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 16px 24px;
-            position: relative;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
+    .task-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--indigo-soft);
+      color: var(--indigo);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
 
-        .bubble.active-bubble {
-            border-color: var(--primary);
-            background: #ffffff;
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.15);
-            border-width: 3px;
-        }
+    .task-item.completed .task-number {
+      background: #EEF1F7;
+      color: var(--gray);
+    }
 
-        .bubble.completed-bubble {
-            background: #f1f3f5;
-            border-color: #dee2e6;
-            opacity: 0.7;
-        }
+    .task-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      padding: 4px 0;
+    }
 
-        .bubble.pending-bubble {
-            opacity: 0.5;
-            transform: scale(0.95);
-        }
+    .task-text {
+      display: block;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.25;
+      word-break: break-word;
+      color: var(--text);
+    }
 
-        .bubble-text {
-            font-size: 0.95rem;
-            line-height: 1.3;
-            word-break: break-word;
-            position: relative;
-            z-index: 2;
-        }
+    .task-item.completed .task-text {
+      text-decoration: line-through;
+      color: var(--gray);
+      opacity: 0.9;
+    }
 
-        /* Doodle crossout line */
-        .crossout-line {
-            position: absolute;
-            height: 4px;
-            border-radius: 2px;
-            top: 50%;
-            left: 10%;
-            width: 0%;
-            transform: translateY(-50%) rotate(-3deg);
-            transition: width 0.4s ease-in-out;
-            pointer-events: none;
-            z-index: 3;
-        }
-        .bubble.completed-bubble .crossout-line {
-            width: 85%;
-        }
+    .task-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
 
-        .arrow-down {
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            line-height: 1;
-        }
-        .arrow-down.active {
-            color: var(--primary);
-        }
+    .small-icon-btn {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: transparent;
+      color: rgba(35, 36, 58, 0.6);
+      font-size: 1.1rem;
+      line-height: 1;
+    }
 
-        .diagram-hint {
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 12px;
-        }
+    .move-day-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(74, 79, 184, 0.08);
+      color: var(--indigo);
+      position: relative;
+      font-size: 1.1rem;
+    }
 
-        /* Reward Modal / Overlay */
-        .reward-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-            z-index: 999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .reward-overlay.show {
-            opacity: 1;
-        }
+    .task-move-up, .task-move-down {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: rgba(35, 36, 58, 0.72);
+      background: transparent;
+    }
 
-        .reward-card {
-            background: white;
-            padding: 24px;
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            animation: floatCat 2s ease-in-out infinite alternate;
-            max-width: 280px;
-            text-align: center;
-        }
+    .main-action-btn {
+      width: 100%;
+      height: 60px;
+      border-radius: 18px;
+      background: var(--indigo);
+      color: white;
+      font-weight: 800;
+      font-size: 1.08rem;
+      box-shadow: 0 10px 18px rgba(74, 79, 184, 0.2);
+      margin-top: 6px;
+      margin-bottom: 2px;
+    }
 
-        .reward-card img {
-            width: 140px;
-            height: 140px;
-            object-fit: contain;
-        }
+    .main-action-btn:disabled {
+      background: rgba(35, 36, 58, 0.12);
+      color: rgba(35, 36, 58, 0.45);
+      box-shadow: none;
+    }
 
-        .reward-card p {
-            font-weight: 600;
-            font-size: 1rem;
-            color: var(--text-main);
-        }
+    .diagram-view {
+      min-height: 100%;
+      padding-top: 2px;
+    }
 
-        @keyframes floatCat {
-            0% { transform: translateY(0px); }
-            100% { transform: translateY(-8px); }
-        }
+    .diagram-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 4px 0 12px;
+      min-height: 46px;
+    }
 
-        @media (prefers-reduced-motion: reduce) {
-            .reward-card { animation: none; }
-            .crossout-line { transition: none; }
-        }
+    .back-button {
+      background: rgba(255,255,255,0.85);
+      border: 1px solid var(--line);
+      color: var(--indigo);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 800;
+      min-width: 124px;
+    }
 
-        /* Settings Modal */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0,0,0,0.4);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        .modal.open {
-            display: flex;
-        }
-        .modal-content {
-            background: white;
-            padding: 24px;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .modal-content textarea {
-            width: 100%;
-            height: 120px;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            font-size: 0.85rem;
-        }
-        .modal-btns {
-            display: flex;
-            gap: 10px;
-        }
-        .modal-btns button {
-            flex: 1;
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: #e9ecef; color: var(--text-main); }
-    </style>
+    .diagram-date {
+      font-weight: 800;
+      color: var(--text);
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+    }
+
+    .diagram-progress {
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .progress-label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .progress-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(74, 79, 184, 0.08);
+      overflow: hidden;
+      border: 1px solid rgba(74, 79, 184, 0.12);
+    }
+
+    .progress-bar span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #6D7BFF 0%, #4A4FB8 100%);
+      border-radius: inherit;
+      transition: width 0.3s ease;
+    }
+
+    .diagram-area {
+      position: relative;
+      flex: 1;
+      min-height: 440px;
+      background:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+        #F8FAFD;
+      background-size: 16px 16px, 16px 16px, 100% 100%;
+      border-radius: 22px 22px 0 0;
+      overflow: hidden;
+      border: 1px solid rgba(220, 230, 242, 0.8);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+      padding: 16px 12px 22px;
+    }
+
+    .bubble-scene {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 420px;
+    }
+
+    .diagram-bubble {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      touch-action: manipulation;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    .diagram-bubble[data-role="done"] {
+      filter: saturate(0.8);
+    }
+
+    .diagram-bubble[data-role="current"] {
+      z-index: 4;
+    }
+
+    .diagram-bubble[data-role="next"] {
+      z-index: 3;
+    }
+
+    .bubble-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .bubble-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 22px;
+      text-align: center;
+      font-weight: 800;
+      line-height: 1.2;
+      color: var(--text);
+      pointer-events: none;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+    }
+
+    .diagram-bubble[data-role="done"] .bubble-label {
+      color: var(--gray-text);
+    }
+
+    .diagram-bubble[data-role="current"] .bubble-label {
+      font-size: 1.06rem;
+    }
+
+    .diagram-bubble[data-role="next"] .bubble-label {
+      font-size: 0.96rem;
+    }
+
+    .diagram-bubble[data-role="done"] .bubble-svg path:first-child {
+      fill: rgba(255,255,255,0.75);
+    }
+
+    .bubble-connector {
+      position: absolute;
+      width: 120px;
+      height: 60px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .connector{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      overflow:visible;
+    }
+
+    .diagram-hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 700;
+      margin: 14px 0 0;
+      min-height: 20px;
+    }
+
+    .reward-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.46);
+      backdrop-filter: blur(1px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 80;
+      pointer-events: none;
+    }
+
+    .reward-card {
+      width: min(82vw, 300px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translateY(-10px);
+      animation: floatReward 2.8s ease-in-out infinite;
+    }
+
+    .reward-card svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(0 18px 20px rgba(35,36,58,0.12));
+    }
+
+    @keyframes floatReward {
+      0%, 100% { transform: translateY(-10px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 20, 32, 0.38);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 70;
+      padding: 12px;
+    }
+
+    .modal-panel {
+      background: rgba(255,255,255,0.98);
+      border-radius: 24px 24px 0 0;
+      width: min(100%, 420px);
+      padding: 18px 16px calc(var(--safe-bottom) + 18px);
+      box-shadow: 0 -12px 30px rgba(35, 36, 58, 0.18);
+    }
+
+    .editor-title {
+      font-size: 1.2rem;
+      font-weight: 900;
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    .field input {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0 14px;
+      background: rgba(246,247,251,0.8);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    .editor-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .editor-button {
+      flex: 1;
+      min-height: 48px;
+      border-radius: 14px;
+      font-weight: 800;
+    }
+
+    .editor-button.primary {
+      background: var(--indigo);
+      color: white;
+    }
+
+    .editor-button.secondary {
+      background: rgba(74,79,184,0.08);
+      color: var(--indigo);
+    }
+
+    .editor-button.danger {
+      background: rgba(217,98,98,0.1);
+      color: var(--danger);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
 </head>
 <body>
-
-    <header>
-        <h1>Úkolníček</h1>
-        <button class="menu-btn" onclick="openMenu()">⚙️</button>
-    </header>
-
-    <div class="container">
-        <!-- 1. SEZNAM VIEW -->
-        <div id="listView" class="view active">
-            <div class="date-switcher">
-                <button class="date-btn" onclick="changeDate(-1)">‹</button>
-                <div class="date-info">
-                    <div id="dateDisplay" class="date-display">po 24. 10.</div>
-                    <button class="today-pill" onclick="goToToday()">Dnes</button>
-                </div>
-                <button class="date-btn" onclick="changeDate(1)">›</button>
+  <div id="app">
+    <section id="listView" class="view active">
+      <div class="list-shell">
+        <div class="list-header">
+          <div class="menu-wrapper">
+            <button class="menu-button" id="menuButton" aria-label="Menu">⋯</button>
+            <div id="menuPanel" class="menu-panel hidden" role="menu">
+              <button class="menu-item" id="backupButton" role="menuitem">Zálohovat</button>
+              <button class="menu-item" id="restoreButton" role="menuitem">Obnovit ze zálohy</button>
             </div>
-
-            <div class="task-input-box">
-                <input type="text" id="taskInput" placeholder="Přidat úkol..." autocomplete="off">
-                <button onclick="addTask()">+</button>
-            </div>
-
-            <div id="taskList" class="task-list">
-                <!-- Dynamické úkoly -->
-            </div>
-
-            <button id="toDiagramBtn" class="main-action-btn" onclick="switchToDiagram()" disabled>Vytvořit diagram →</button>
+          </div>
         </div>
 
-        <!-- 2. DIAGRAM VIEW -->
-        <div id="diagramView" class="view">
-            <div class="diagram-header">
-                <button class="back-list-btn" onclick="switchToasterList()">‹ Upravit seznam</button>
-                <div id="diagramDateDisplay" style="font-weight: 600;">so 24. 10.</div>
-            </div>
-
-            <div class="diagram-container" id="diagramContainer">
-                <!-- 3 bubliny -->
-            </div>
-
-            <div class="diagram-hint">Podržte prst na aktuální bublině pro splnění úkolu. Klepnutím na splněnou bublinu splnění zrušíte.</div>
+        <div class="date-switcher">
+          <button class="nav-button" id="prevDayBtn" aria-label="Předchozí den">‹</button>
+          <div class="date-label-wrap">
+            <div id="dateLabel" class="date-label">so 24. 10.</div>
+            <button id="todayBtn" class="today-button">Dnes</button>
+          </div>
+          <button class="nav-button" id="nextDayBtn" aria-label="Další den">›</button>
         </div>
+
+        <div class="task-input-box">
+          <input id="taskInput" class="task-input" type="text" maxlength="220" placeholder="Přidat úkol…" aria-label="Přidat úkol">
+          <button id="addTaskBtn" class="add-button" aria-label="Přidat úkol">＋</button>
+        </div>
+
+        <div id="taskList" class="task-list" aria-live="polite"></div>
+        <button id="createDiagramBtn" class="main-action-btn" disabled>Vytvořit diagram</button>
+      </div>
+    </section>
+
+    <section id="diagramView" class="view diagram-view">
+      <div class="diagram-top">
+        <button id="backToListBtn" class="back-button">Upravit seznam</button>
+        <div id="diagramDate" class="diagram-date">so 24. 10.</div>
+      </div>
+      <div class="diagram-progress">
+        <div id="progressLabel" class="progress-label">0 z 0 hotovo</div>
+        <div class="progress-bar"><span id="progressFill"></span></div>
+      </div>
+      <div id="diagramArea" class="diagram-area" aria-live="polite"></div>
+      <div class="diagram-hint">Dvojitým klepnutím na bublinu úkol splníš.</div>
+    </section>
+  </div>
+
+  <div id="taskEditor" class="modal hidden" aria-hidden="true">
+    <div class="modal-panel">
+      <div class="editor-title">Úprava úkolu</div>
+      <div class="field">
+        <label for="editText">Úkol</label>
+        <input id="editText" type="text" maxlength="220">
+      </div>
+      <div class="field">
+        <label for="editShort">Krátký název pro diagram</label>
+        <input id="editShort" type="text" maxlength="40" placeholder="Nepovinné">
+      </div>
+      <div class="editor-actions">
+        <button id="deleteTaskBtn" class="editor-button danger">Smazat</button>
+        <button id="cancelEditBtn" class="editor-button secondary">Zrušit</button>
+        <button id="saveTaskBtn" class="editor-button primary">Uložit</button>
+      </div>
     </div>
+  </div>
 
-    <!-- Reward Overlay -->
-    <div id="rewardOverlay" class="reward-overlay">
-        <div class="reward-card">
-            <img id="rewardImg" src="" alt="Odměna">
-            <p id="rewardText">Skvělá práce!</p>
-        </div>
-    </div>
+  <div id="rewardOverlay" class="reward-overlay hidden" aria-live="polite"></div>
+  <input id="nativeDatePicker" class="sr-only" type="date">
 
-    <!-- Settings / Backup Modal -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <h3>Záloha a obnova dat</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Pro ochranu dat před smazáním v Safari můžete data zazálohovat jako JSON.</p>
-            <textarea id="backupText" placeholder="Zde se objeví záloha JSON..."></textarea>
-            <div class="modal-btns">
-                <button class="btn-secondary" onclick="generateBackup()">Zálohovat</button>
-                <button class="btn-primary" onclick="restoreBackup()">Obnovit</button>
+  <script>
+    const STORAGE_KEY = 'ukolnicek-data-v1';
+    const palette = ['#E8836B', '#4FB3A5', '#E3B04B', '#8E7CC3', '#5B9BD5'];
+
+    const state = {
+      tasks: [],
+      activeDate: formatDateKey(new Date()),
+      activeView: 'list',
+      editingTaskId: null,
+      pendingMoveTaskId: null,
+      rewardTimeout: null
+    };
+
+    const els = {
+      listView: document.getElementById('listView'),
+      diagramView: document.getElementById('diagramView'),
+      dateLabel: document.getElementById('dateLabel'),
+      diagramDate: document.getElementById('diagramDate'),
+      taskInput: document.getElementById('taskInput'),
+      addTaskBtn: document.getElementById('addTaskBtn'),
+      taskList: document.getElementById('taskList'),
+      createDiagramBtn: document.getElementById('createDiagramBtn'),
+      prevDayBtn: document.getElementById('prevDayBtn'),
+      nextDayBtn: document.getElementById('nextDayBtn'),
+      todayBtn: document.getElementById('todayBtn'),
+      backToListBtn: document.getElementById('backToListBtn'),
+      menuButton: document.getElementById('menuButton'),
+      menuPanel: document.getElementById('menuPanel'),
+      backupButton: document.getElementById('backupButton'),
+      restoreButton: document.getElementById('restoreButton'),
+      nativeDatePicker: document.getElementById('nativeDatePicker'),
+      taskEditor: document.getElementById('taskEditor'),
+      editText: document.getElementById('editText'),
+      editShort: document.getElementById('editShort'),
+      saveTaskBtn: document.getElementById('saveTaskBtn'),
+      cancelEditBtn: document.getElementById('cancelEditBtn'),
+      deleteTaskBtn: document.getElementById('deleteTaskBtn'),
+      rewardOverlay: document.getElementById('rewardOverlay'),
+      progressLabel: document.getElementById('progressLabel'),
+      progressFill: document.getElementById('progressFill'),
+      diagramArea: document.getElementById('diagramArea')
+    };
+
+    function formatDateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseDateKey(value) {
+      return new Date(value + 'T12:00:00');
+    }
+
+    function formatDayLabel(dateKey) {
+      const date = parseDateKey(dateKey);
+      const dayNames = ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'];
+      const day = dayNames[date.getDay()];
+      const d = date.getDate();
+      const month = date.getMonth() + 1;
+      return `${day} ${d}. ${month}.`;
+    }
+
+    function formatLongDate(dateKey) {
+      const date = parseDateKey(dateKey);
+      const formatter = new Intl.DateTimeFormat('cs-CZ', { weekday: 'short', day: 'numeric', month: 'numeric', hour12: false });
+      return formatter.format(date).replace('.', '').replace(/\s+/g, ' ').trim();
+    }
+
+    function initState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        state.tasks = [];
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        state.tasks = Array.isArray(parsed) ? parsed : (parsed.tasks || []);
+      } catch (error) {
+        state.tasks = [];
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks));
+    }
+
+    function getTasksForDate(dateKey) {
+      return state.tasks
+        .filter(task => task.date === dateKey)
+        .sort((a, b) => a.order - b.order);
+    }
+
+    function getNextOrder(dateKey) {
+      const list = getTasksForDate(dateKey);
+      return list.length ? Math.max(...list.map(task => task.order)) + 1 : 1;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function shortenText(value, maxLength = 28) {
+      const text = String(value || '').trim();
+      if (text.length <= maxLength) return text;
+      const cut = text.slice(0, maxLength).trim();
+      const lastSpace = cut.lastIndexOf(' ');
+      let result = lastSpace > 0 ? cut.slice(0, lastSpace) : cut;
+      if (result.length < text.length) result = result.trim();
+      return `${result.replace(/[\s.]+$/, '')}…`;
+    }
+
+    function generateRandom(seed) {
+      let value = seed % 2147483647;
+      if (value <= 0) value += 2147483646;
+      return function() {
+        value = value * 16807 % 2147483647;
+        return (value - 1) / 2147483646;
+      };
+    }
+
+    function createTask(text, dateKey) {
+      const trimmed = String(text || '').trim();
+      if (!trimmed) return null;
+      const item = {
+        id: crypto.randomUUID ? crypto.randomUUID() : `task-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        text: trimmed,
+        shortTitle: '',
+        date: dateKey,
+        order: getNextOrder(dateKey),
+        done: false,
+        doneAt: null,
+        color: palette[Math.floor(Math.random() * palette.length)],
+        shapeSeed: Math.random() * 100000,
+        hatchSeed: Math.random() * 100000,
+        rewardShown: false
+      };
+      return item;
+    }
+
+    function addTaskFromInput() {
+      const value = els.taskInput.value;
+      const task = createTask(value, state.activeDate);
+      if (!task) {
+        els.taskInput.value = '';
+        updateAddButtonState();
+        return;
+      }
+      state.tasks.push(task);
+      els.taskInput.value = '';
+      saveState();
+      renderList();
+      const firstTask = document.querySelector('[data-task-id="' + task.id + '"]');
+      if (firstTask) firstTask.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      els.taskInput.focus();
+      updateAddButtonState();
+    }
+
+    function updateAddButtonState() {
+      const empty = !String(els.taskInput.value).trim();
+      els.addTaskBtn.classList.toggle('disabled', empty);
+    }
+
+    function moveTaskInOrder(taskId, direction) {
+      const list = getTasksForDate(state.activeDate);
+      const index = list.findIndex(task => task.id === taskId);
+      if (index < 0) return;
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return;
+      const arr = list;
+      const item = arr[index];
+      const other = arr[targetIndex];
+      const tempOrder = item.order;
+      item.order = other.order;
+      other.order = tempOrder;
+      saveState();
+      renderList();
+    }
+
+    function setTaskDate(taskId, newDateKey) {
+      const task = state.tasks.find(item => item.id === taskId);
+      if (!task || !newDateKey) return;
+      task.date = newDateKey;
+      task.order = getNextOrder(newDateKey);
+      saveState();
+      renderList();
+      renderDiagram();
+    }
+
+    function findTaskById(taskId) {
+      return state.tasks.find(task => task.id === taskId) || null;
+    }
+
+    function showEditor(taskId) {
+      const task = findTaskById(taskId);
+      if (!task) return;
+      state.editingTaskId = taskId;
+      els.editText.value = task.text;
+      els.editShort.value = task.shortTitle || '';
+      els.taskEditor.classList.remove('hidden');
+      els.taskEditor.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => els.editText.focus());
+    }
+
+    function closeEditor() {
+      state.editingTaskId = null;
+      els.taskEditor.classList.add('hidden');
+      els.taskEditor.setAttribute('aria-hidden', 'true');
+    }
+
+    function saveEditedTask() {
+      const task = findTaskById(state.editingTaskId);
+      if (!task) return;
+      const nextText = String(els.editText.value || '').trim();
+      if (!nextText) {
+        return;
+      }
+      task.text = nextText;
+      task.shortTitle = String(els.editShort.value || '').trim();
+      closeEditor();
+      saveState();
+      renderList();
+      renderDiagram();
+    }
+
+    function deleteTask() {
+      const task = findTaskById(state.editingTaskId);
+      if (!task) return;
+      const ok = window.confirm('Smazat tento úkol?');
+      if (!ok) return;
+      state.tasks = state.tasks.filter(item => item.id !== task.id);
+      closeEditor();
+      saveState();
+      renderList();
+      renderDiagram();
+    }
+
+    function renderList() {
+      els.dateLabel.textContent = formatDayLabel(state.activeDate);
+      const tasks = getTasksForDate(state.activeDate);
+      els.createDiagramBtn.disabled = tasks.length === 0;
+      if (tasks.length === 0) {
+        els.taskList.innerHTML = '';
+        return;
+      }
+
+      els.taskList.innerHTML = tasks.map((task, index) => {
+        const isCompleted = task.done;
+        return `
+          <div class="task-item ${isCompleted ? 'completed' : ''}" data-task-id="${task.id}" draggable="true">
+            <div class="drag-handle" aria-label="Přesunout úkol">⋮⋮</div>
+            <div class="task-number">${index + 1}</div>
+            <div class="task-main task-open-editor" data-task-id="${task.id}">
+              <span class="task-text">${escapeHtml(task.text)}</span>
             </div>
-            <button class="btn-secondary" onclick="closeMenu()" style="margin-top: 4px;">Zavřít</button>
-        </div>
-    </div>
+            <div class="task-actions">
+              <button class="small-icon-btn task-move-up" data-task-id="${task.id}" aria-label="Posunout nahoru">↑</button>
+              <button class="small-icon-btn task-move-down" data-task-id="${task.id}" aria-label="Posunout dolů">↓</button>
+              <button class="move-day-btn" data-move-id="${task.id}" aria-label="Přesunout na jiný den">📅</button>
+            </div>
+          </div>
+        `;
+      }).join('');
 
-    <script>
-        // Base64 obrázky odměn
-        const CATS = {
-            proud: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", // Fallback / Base64 placeholder (nahrazeno bezpečnými datovými URI níže)
-            frustrated: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
-            free: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
-        };
-        // Skutečné Base64 pro kočky (zjednodušené bezpečné URI s plným obsahem z příloh)
-        // Použijeme čisté SVG nebo malé SVG data URI reprezentace, nebo stabilní base64 pro spolehlivost offline.
-        CATS.proud = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#fffaf0"/><circle cx="100" cy="100" r="70" fill="#e2e8f0" stroke="#1a202c" stroke-width="4"/><text x="100" y="105" font-size="24" text-anchor="middle" fill="#1a202c">🐱 Proud</text></svg>');
-        CATS.frustrated = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#fff5f5"/><circle cx="100" cy="100" r="70" fill="#fed7d7" stroke="#9b2c2c" stroke-width="4"/><text x="100" y="105" font-size="22" text-anchor="middle" fill="#9b2c2c">😾 Frustrated</text></svg>');
-        CATS.free = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#f0fff4"/><circle cx="100" cy="100" r="70" fill="#c6f6d5" stroke="#22543d" stroke-width="4"/><text x="100" y="105" font-size="22" text-anchor="middle" fill="#22543d">😻 Free Cat</text></svg>');
-
-        const STROKE_COLORS = ['#e63946', '#2a9d8f', '#e9c46a', '#f4a261', '#9b5de5'];
-
-        let currentDate = new Date().toISOString().split('T')[0];
-        let currentMode = 'list'; // 'list' nebo 'diagram'
-
-        // Načtení dat z localStorage
-        function loadData() {
-            const data = localStorage.getItem('ukolnicek_data');
-            return data ? JSON.parse(data) : { tasks: {}, diagramState: {} };
-        }
-
-        function saveData(data) {
-            localStorage.setItem('ukolnicek_data', JSON.stringify(data));
-        }
-
-        function getFormattedDateString(dateStr) {
-            const d = new Date(dateStr);
-            const days = ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'];
-            const dayName = days[d.getDay()];
-            const dayNum = d.getDate();
-            const monthNum = d.getMonth() + 1;
-            return `${dayName} ${dayNum}. ${monthNum}.`;
-        }
-
-        function initApp() {
-            updateDateDisplay();
-            renderTasks();
-        }
-
-        function updateDateDisplay() {
-            const formatted = getFormattedDateString(currentDate);
-            document.getElementById('dateDisplay').textContent = formatted;
-            document.getElementById('diagramDateDisplay').textContent = formatted;
-        }
-
-        function changeDate(days) {
-            const d = new Date(currentDate);
-            d.setDate(d.getDate() + days);
-            currentDate = d.toISOString().split('T')[0];
-            updateDateDisplay();
-            renderTasks();
-        }
-
-        function goToToday() {
-            currentDate = new Date().toISOString().split('T')[0];
-            updateDateDisplay();
-            renderTasks();
-        }
-
-        // Správa úkolů
-        function getTasksForCurrentDate() {
-            const db = loadData();
-            return db.tasks[currentDate] || [];
-        }
-
-        function saveTasksForCurrentDate(tasks) {
-            const db = loadData();
-            db.tasks[currentDate] = tasks;
-            saveData(db);
-        }
-
-        function addTask() {
-            const input = document.getElementById('taskInput');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const tasks = getTasksForCurrentDate();
-            const newTask = {
-                id: 't_' + Date.now() + Math.random().toString(36.substr(2, 5)),
-                text: text,
-                shortTitle: '',
-                completed: false,
-                completedAt: null,
-                strokeColor: STROKE_COLORS[Math.floor(Math.random() * STROKE_COLORS.length)],
-                rewardShown: false,
-                order: tasks.length
-            };
-
-            tasks.push(newTask);
-            saveTasksForCurrentDate(tasks);
-            input.value = '';
-            renderTasks();
-        }
-
-        document.getElementById('taskInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') addTask();
+      els.taskList.querySelectorAll('.task-item').forEach(item => {
+        item.addEventListener('dragstart', function(event) {
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', item.dataset.taskId);
+          item.classList.add('dragging');
         });
+        item.addEventListener('dragend', function() {
+          item.classList.remove('dragging');
+        });
+        item.addEventListener('dragover', function(event) {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'move';
+        });
+        item.addEventListener('drop', function(event) {
+          event.preventDefault();
+          const draggedId = event.dataTransfer.getData('text/plain');
+          const targetId = item.dataset.taskId;
+          if (!draggedId || draggedId === targetId) return;
+          reorderTasksById(draggedId, targetId);
+        });
+      });
+    }
 
-        function deleteTask(id) {
-            let tasks = getTasksForCurrentDate();
-            tasks = tasks.filter(t => t.id !== id);
-            tasks.forEach((t, index) => t.order = index);
-            saveTasksForCurrentDate(tasks);
-            renderTasks();
+    function reorderTasksById(draggedId, targetId) {
+      const list = getTasksForDate(state.activeDate);
+      const draggedIndex = list.findIndex(task => task.id === draggedId);
+      const targetIndex = list.findIndex(task => task.id === targetId);
+      if (draggedIndex < 0 || targetIndex < 0) return;
+      const [moved] = list.splice(draggedIndex, 1);
+      list.splice(targetIndex, 0, moved);
+      list.forEach((task, index) => {
+        const tasks = state.tasks.filter(item => item.date === state.activeDate && item.id === task.id);
+        if (tasks.length) {
+          tasks[0].order = index + 1;
+        }
+      });
+      state.tasks = state.tasks.map(task => {
+        const current = list.find(item => item.id === task.id);
+        if (current && task.date === state.activeDate) {
+          task.order = list.indexOf(current) + 1;
+        }
+        return task;
+      });
+      saveState();
+      renderList();
+    }
+
+    function renderDiagram() {
+      const tasks = getTasksForDate(state.activeDate);
+      const doneCount = tasks.filter(t => t.done).length;
+      const total = tasks.length;
+      els.progressLabel.textContent = `${doneCount} z ${total} hotovo`;
+      els.progressFill.style.width = total ? `${(doneCount / total) * 100}%` : '0%';
+      els.diagramDate.textContent = formatDayLabel(state.activeDate);
+      if (!total) {
+        els.diagramArea.innerHTML = '';
+        return;
+      }
+
+      const doneTasks = tasks.filter(task => task.done);
+      const openTasks = tasks.filter(task => !task.done);
+      const previous = doneTasks.length ? doneTasks[doneTasks.length - 1] : null;
+      const current = openTasks.length ? openTasks[0] : (doneTasks.length ? doneTasks[doneTasks.length - 1] : null);
+      const next = openTasks.length > 1 ? openTasks[1] : null;
+
+      const list = [];
+      if (previous && previous.id !== current?.id) list.push({ task: previous, role: 'done' });
+      if (current) list.push({ task: current, role: 'current' });
+      if (next && next.id !== current?.id) list.push({ task: next, role: 'next' });
+
+      const bubbles = list.map((entry, index) => renderBubble(entry.task, entry.role, index, list.length)).join('');
+      els.diagramArea.innerHTML = `<div class="bubble-scene">${bubbles}</div>`;
+
+      els.diagramArea.querySelectorAll('.diagram-bubble').forEach(bubble => {
+        const taskId = bubble.dataset.taskId;
+        bubble.addEventListener('dblclick', () => toggleTaskDone(taskId));
+        bubble.addEventListener('click', () => {
+          bubble.style.transform = 'scale(0.98)';
+          setTimeout(() => bubble.style.transform = '', 140);
+        });
+      });
+    }
+
+    function renderBubble(task, role, index, total) {
+      const width = role === 'current' ? 252 : 222;
+      const height = role === 'current' ? 176 : 154;
+      const isDone = role === 'done';
+      const path = generateBubblePath(width, height, task.shapeSeed || 1);
+      const strokeColor = isDone ? '#7D8096' : '#1B1B24';
+      const strokeWidth = role === 'current' ? 4 : role === 'next' ? 2.8 : 2.3;
+      const textColor = isDone ? '#4A4D63' : '#23243A';
+      const label = task.shortTitle && String(task.shortTitle).trim().length ? task.shortTitle : shortenText(task.text, role === 'current' ? 26 : 20);
+      const styleLeft = role === 'current' ? 'calc(50% - 130px)' : role === 'done' ? '10%' : '18%';
+      const styleTop = role === 'done' ? '7%' : role === 'current' ? '36%' : '62%';
+      const svg = `
+        <svg class="bubble-svg" viewBox="0 0 ${width} ${height}" aria-hidden="true">
+          <path d="${path}" fill="rgba(255,255,255,0.96)" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" />
+          ${isDone ? renderHatch(task, width, height) : ''}
+        </svg>
+      `;
+
+      const style = `left:${styleLeft}; top:${styleTop}; width:${width}px; height:${height}px;`;
+      const lineMarkup = renderConnectorMarkup(role, total, index, width, height);
+      return `
+        <div class="diagram-bubble" data-task-id="${task.id}" data-role="${role}" style="${style}">
+          ${lineMarkup}
+          ${svg}
+          <div class="bubble-label" style="color:${textColor};">${escapeHtml(label)}</div>
+        </div>
+      `;
+    }
+
+    function renderConnectorMarkup(role, total, index, width, height) {
+      if (role === 'done') return '';
+      if (role === 'current') {
+        const line = `
+          <svg class="connector" viewBox="0 0 120 80" preserveAspectRatio="none">
+            <path d="M 10 52 Q 58 18, 110 42" fill="none" stroke="${role === 'current' ? '#1B1B24' : '#B3B7C8'}" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M 93 34 L 110 42 L 95 55" fill="none" stroke="${role === 'current' ? '#1B1B24' : '#B3B7C8'}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `;
+        return `<div class="bubble-connector" style="left:${width}px; top:${height*0.5 - 32}px;">${line}</div>`;
+      }
+      return '';
+    }
+
+    function renderHatch(task, width, height) {
+      const rand = generateRandom(Math.floor(task.hatchSeed || 1));
+      const color = task.color || '#E8836B';
+      const lines = [];
+      for (let i = 0; i < 6; i++) {
+        const startX = -10 + rand() * 16;
+        const startY = 18 + rand() * (height - 34);
+        const endX = width + 14 + rand() * 22;
+        const endY = 10 + rand() * (height - 18);
+        const opacity = 0.7 + rand() * 0.2;
+        lines.push(`<line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="${color}" stroke-width="3.2" stroke-linecap="round" opacity="${opacity}" />`);
+      }
+      return `<g>${lines.join('')}</g>`;
+    }
+
+    function generateBubblePath(width, height, seed) {
+      const rand = generateRandom(Math.floor(seed || 1));
+      const leftBias = 18 + rand() * 18;
+      const rightBias = 18 + rand() * 18;
+      const topBias = 18 + rand() * 18;
+      const bottomBias = 18 + rand() * 18;
+      const topMid = 4 + rand() * 14;
+      const rightMid = 6 + rand() * 12;
+      const bottomMid = 8 + rand() * 14;
+      const leftMid = 8 + rand() * 12;
+
+      return [
+        `M ${leftBias} ${height / 2}`,
+        `Q 0 ${topBias + 12}, ${leftBias + 4} 0`,
+        `Q ${width * 0.35} ${-topMid}, ${width / 2} ${-10 - rand() * 8}`,
+        `Q ${width - rightBias - 6} ${topBias}, ${width - rightBias} ${height / 2}`,
+        `Q ${width} ${height * 0.62 + rightMid}, ${width - rightMid} ${height - bottomBias}`,
+        `Q ${width * 0.7} ${height + bottomMid}, ${width * 0.42} ${height - 2}`,
+        `Q ${leftBias + 10} ${height}, ${leftMid} ${height / 2}`,
+        'Z'
+      ].join(' ');
+    }
+
+    function toggleTaskDone(taskId) {
+      const task = findTaskById(taskId);
+      if (!task) return;
+
+      if (task.done) {
+        task.done = false;
+        task.doneAt = null;
+        if (task.rewardShown) {
+          showReward('sad');
+          task.rewardShown = false;
+        }
+      } else {
+        task.done = true;
+        task.doneAt = new Date().toISOString();
+        const allDone = getTasksForDate(state.activeDate).every(item => item.done);
+        if (allDone) {
+          showReward('happy');
+          task.rewardShown = false;
+        } else if (!task.rewardShown && Math.random() < 0.5) {
+          showReward('cute');
+          task.rewardShown = true;
+        }
+      }
+
+      saveState();
+      renderList();
+      renderDiagram();
+    }
+
+    function showReward(type) {
+      clearTimeout(state.rewardTimeout);
+      const markup = type === 'cute'
+        ? cuteCatSvg
+        : type === 'sad'
+          ? sadCatSvg
+          : happyCatSvg;
+      els.rewardOverlay.innerHTML = `<div class="reward-card">${markup}</div>`;
+      els.rewardOverlay.classList.remove('hidden');
+      state.rewardTimeout = setTimeout(() => {
+        els.rewardOverlay.classList.add('hidden');
+      }, 4000);
+    }
+
+    function goToDate(offset) {
+      const date = parseDateKey(state.activeDate);
+      date.setDate(date.getDate() + offset);
+      state.activeDate = formatDateKey(date);
+      renderList();
+      renderDiagram();
+    }
+
+    function showList() {
+      state.activeView = 'list';
+      els.listView.classList.add('active');
+      els.diagramView.classList.remove('active');
+      renderList();
+    }
+
+    function showDiagram() {
+      if (!getTasksForDate(state.activeDate).length) return;
+      state.activeView = 'diagram';
+      els.listView.classList.remove('active');
+      els.diagramView.classList.add('active');
+      renderDiagram();
+    }
+
+    function backupAllData() {
+      const payload = JSON.stringify(state.tasks, null, 2);
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(payload).catch(() => {});
+        }
+      } catch (error) {}
+      window.prompt('Záloha dat (zkopírujte nebo uložte):', payload);
+    }
+
+    function restoreFromBackup() {
+      const input = window.prompt('Vlož text zálohy JSON:', '');
+      if (!input) return;
+      try {
+        const parsed = JSON.parse(input);
+        const tasks = Array.isArray(parsed) ? parsed : parsed.tasks;
+        if (!Array.isArray(tasks)) throw new Error('Neplatný formát');
+        state.tasks = tasks;
+        saveState();
+        renderList();
+        renderDiagram();
+      } catch (error) {
+        window.alert('Záloha se nepodařilo načíst.');
+      }
+    }
+
+    function attachEvents() {
+      els.taskInput.addEventListener('input', updateAddButtonState);
+      els.taskInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          addTaskFromInput();
+        }
+      });
+      els.addTaskBtn.addEventListener('click', addTaskFromInput);
+      els.menuButton.addEventListener('click', () => {
+        els.menuPanel.classList.toggle('hidden');
+      });
+      els.backupButton.addEventListener('click', backupAllData);
+      els.restoreButton.addEventListener('click', restoreFromBackup);
+      els.prevDayBtn.addEventListener('click', () => goToDate(-1));
+      els.nextDayBtn.addEventListener('click', () => goToDate(1));
+      els.todayBtn.addEventListener('click', () => {
+        state.activeDate = formatDateKey(new Date());
+        renderList();
+        renderDiagram();
+      });
+      els.createDiagramBtn.addEventListener('click', showDiagram);
+      els.backToListBtn.addEventListener('click', showList);
+
+      document.addEventListener('click', (event) => {
+        const moveBtn = event.target.closest('[data-move-id]');
+        if (moveBtn) {
+          state.pendingMoveTaskId = moveBtn.dataset.moveId;
+          els.nativeDatePicker.value = '';
+          els.nativeDatePicker.click();
+          return;
         }
 
-        function editTask(id) {
-            const tasks = getTasksForCurrentDate();
-            const task = tasks.find(t => t.id === id);
-            if (!task) return;
-            const newText = prompt("Upravit úkol:", task.text);
-            if (newText !== null && newText.trim() !== "") {
-                task.text = newText.trim();
-                saveTasksForCurrentDate(tasks);
-                renderTasks();
-            }
+        const taskMoveUp = event.target.closest('.task-move-up');
+        if (taskMoveUp) {
+          moveTaskInOrder(taskMoveUp.dataset.taskId, 'up');
+          return;
         }
 
-        function moveTaskDate(id) {
-            const targetDate = prompt("Zadejte datum přesunu (YYYY-MM-DD):", currentDate);
-            if (!targetDate) return;
-            
-            const db = loadData();
-            const tasks = db.tasks[currentDate] || [];
-            const taskIndex = tasks.findIndex(t => t.id === id);
-            if (taskIndex === -1) return;
-
-            const [task] = tasks.splice(taskIndex, 1);
-            tasks.forEach((t, i) => t.order = i);
-            db.tasks[currentDate] = tasks;
-
-            if (!db.tasks[targetDate]) db.tasks[targetDate] = [];
-            task.order = db.tasks[targetDate].length;
-            db.tasks[targetDate].push(task);
-
-            saveData(db);
-            renderTasks();
+        const taskMoveDown = event.target.closest('.task-move-down');
+        if (taskMoveDown) {
+          moveTaskInOrder(taskMoveDown.dataset.taskId, 'down');
+          return;
         }
 
-        function moveOrder(id, direction) {
-            const tasks = getTasksForCurrentDate();
-            const index = tasks.findIndex(t => t.id === id);
-            if (index === -1) return;
-            const newIndex = index + direction;
-            if (newIndex < 0 || newIndex >= tasks.length) return;
-
-            const temp = tasks[index];
-            tasks[index] = tasks[newIndex];
-            tasks[newIndex] = temp;
-
-            tasks.forEach((t, i) => t.order = i);
-            saveTasksForCurrentDate(tasks);
-            renderTasks();
+        const taskOpen = event.target.closest('.task-open-editor');
+        if (taskOpen) {
+          showEditor(taskOpen.dataset.taskId);
+          return;
         }
 
-        function renderTasks() {
-            const tasks = getTasksForCurrentDate();
-            const listEl = document.getElementById('taskList');
-            listEl.innerHTML = '';
-
-            const toDiagramBtn = document.getElementById('toDiagramBtn');
-            toDiagramBtn.disabled = tasks.length === 0;
-
-            tasks.forEach((task, index) => {
-                const item = document.createElement('div');
-                item.className = `task-item ${task.completed ? 'completed' : ''}`;
-                item.setAttribute('data-id', task.id);
-
-                item.innerHTML = `
-                    <div class="drag-handle">⠿</div>
-                    <div class="task-content">
-                        <div class="task-text">${escapeHtml(task.text)}</div>
-                    </div>
-                    <div class="task-actions">
-                        <button class="action-icon-btn" onclick="moveOrder('${task.id}', -1)" title="Nahoru">↑</button>
-                        <button class="action-icon-btn" onclick="moveOrder('${task.id}', 1)" title="Dolů">↓</button>
-                        ${!task.completed ? `<button class="action-icon-btn" onclick="moveTaskDate('${task.id}')" title="Přesunout">📅</button>` : ''}
-                        <button class="action-icon-btn" onclick="editTask('${task.id}')" title="Upravit">✏️</button>
-                        <button class="action-icon-btn" onclick="deleteTask('${task.id}')" title="Smazat">🗑️</button>
-                    </div>
-                `;
-
-                // Drag and drop Pointer Events
-                setupDragAndDrop(item, task.id);
-                listEl.appendChild(item);
-            });
+        const bubble = event.target.closest('.diagram-bubble');
+        if (bubble) {
+          return;
         }
 
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        if (!event.target.closest('.menu-panel') && !event.target.closest('#menuButton')) {
+          els.menuPanel.classList.add('hidden');
         }
+      });
 
-        // Jednoduchý drag and drop přes Pointer Events
-        function setupDragAndDrop(element, id) {
-            let startY = 0;
-            let initialIndex = 0;
-
-            element.querySelector('.drag-handle').addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                element.setPointerCapture(e.pointerId);
-                element.classList.add('dragging');
-                startY = e.clientY;
-
-                const tasks = getTasksForCurrentDate();
-                initialIndex = tasks.findIndex(t => t.id === id);
-
-                const onPointerMove = (moveEvent) => {
-                    const deltaY = moveEvent.clientY - startY;
-                    if (Math.abs(deltaY) > 40) {
-                        const direction = deltaY > 0 ? 1 : -1;
-                        moveOrder(id, direction);
-                        startY = moveEvent.clientY;
-                    }
-                };
-
-                const onPointerUp = (upEvent) => {
-                    element.classList.remove('dragging');
-                    element.releasePointerCapture(upEvent.pointerId);
-                    element.removeEventListener('pointermove', onPointerMove);
-                    element.removeEventListener('pointerup', onPointerUp);
-                };
-
-                element.addEventListener('pointermove', onPointerMove);
-                element.addEventListener('pointerup', onPointerUp);
-            });
+      els.nativeDatePicker.addEventListener('change', () => {
+        if (!state.pendingMoveTaskId) return;
+        const selected = els.nativeDatePicker.value;
+        if (selected) {
+          setTaskDate(state.pendingMoveTaskId, selected);
         }
+        state.pendingMoveTaskId = null;
+      });
 
-        // Režim Diagramu
-        function switchToDiagram() {
-            currentMode = 'diagram';
-            document.getElementById('listView').classList.remove('active');
-            document.getElementById('diagramView').classList.add('active');
-            renderDiagram();
+      els.saveTaskBtn.addEventListener('click', saveEditedTask);
+      els.cancelEditBtn.addEventListener('click', closeEditor);
+      els.deleteTaskBtn.addEventListener('click', deleteTask);
+      els.taskEditor.addEventListener('click', (event) => {
+        if (event.target === els.taskEditor) closeEditor();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !els.taskEditor.classList.contains('hidden')) {
+          closeEditor();
         }
+      });
+    }
 
-        function switchToasterList() {
-            currentMode = 'list';
-            document.getElementById('diagramView').classList.remove('active');
-            document.getElementById('listView').classList.add('active');
-            renderTasks();
-        }
+    const cuteCatSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300" role="img" aria-label="Roztomilé koťátko">
+        <defs>
+          <radialGradient id="furCute" cx="0.5" cy="0.3" r="0.8"><stop offset="0" stop-color="#F8BB6E"/><stop offset="0.6" stop-color="#EE9A45"/><stop offset="1" stop-color="#D87C2C"/></radialGradient>
+          <radialGradient id="creamCute" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#FFF6E6"/><stop offset="1" stop-color="#F7D9AE"/></radialGradient>
+          <radialGradient id="pupilCute" cx="0.4" cy="0.35" r="0.75"><stop offset="0" stop-color="#4A2E18"/><stop offset="1" stop-color="#100804"/></radialGradient>
+          <linearGradient id="earInCute" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F8B7AE"/><stop offset="1" stop-color="#EE8E98"/></linearGradient>
+          <filter id="blurCute" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+        </defs>
+        <ellipse cx="120" cy="290" rx="78" ry="8" fill="#000000" opacity="0.14" filter="url(#blurCute)"/>
+        <path d="M176 262 C 226 268, 238 214, 214 176" fill="none" stroke="#EE9A45" stroke-width="30" stroke-linecap="round"/>
+        <path d="M196 268 L 208 248 M228 238 L 240 228" fill="none" stroke="#C46A20" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+        <path d="M216 190 C 213 182, 212 178, 212 172" fill="none" stroke="#8A4A1E" stroke-width="30" stroke-linecap="round"/>
+        <path d="M120 130 C 62 130, 44 200, 56 250 C 64 284, 176 284, 184 250 C 196 200, 178 130, 120 130 Z" fill="url(#furCute)"/>
+        <ellipse cx="120" cy="236" rx="32" ry="44" fill="url(#creamCute)"/>
+        <g stroke="#C46A20" stroke-width="7" stroke-linecap="round" opacity="0.6" fill="none"><path d="M58 206 Q 74 208 84 220"/><path d="M56 232 Q 74 234 84 246"/><path d="M182 206 Q 166 208 156 220"/><path d="M184 232 Q 166 234 156 246"/></g>
+        <ellipse cx="86" cy="280" rx="23" ry="12" fill="url(#creamCute)"/>
+        <ellipse cx="154" cy="280" rx="23" ry="12" fill="url(#creamCute)"/>
+        <path d="M78 287 L 78 280 M86 288 L 86 281 M94 287 L 94 280 M146 287 L 146 280 M154 288 L 154 281 M162 287 L 162 280" fill="none" stroke="#D9B48A" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M56 92 L 46 28 L 108 58 Z" fill="#EE9A45" stroke="#EE9A45" stroke-width="8" stroke-linejoin="round"/>
+        <path d="M184 92 L 194 28 L 132 58 Z" fill="#EE9A45" stroke="#EE9A45" stroke-width="8" stroke-linejoin="round"/>
+        <path d="M62 80 L 56 42 L 94 62 Z" fill="url(#earInCute)" stroke="url(#earInCute)" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M178 80 L 184 42 L 146 62 Z" fill="url(#earInCute)" stroke="url(#earInCute)" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M50 112 L 28 124 L 48 128 L 32 142 L 54 140 L 42 154 L 66 146 Z" fill="#F2A453"/>
+        <path d="M190 112 L 212 124 L 192 128 L 208 142 L 186 140 L 198 154 L 174 146 Z" fill="#F2A453"/>
+        <ellipse cx="120" cy="102" rx="78" ry="66" fill="url(#furCute)"/>
+        <g stroke="#C46A20" stroke-width="6" stroke-linecap="round" opacity="0.6"><path d="M120 42 L 120 62"/><path d="M100 46 L 104 64"/><path d="M140 46 L 136 64"/><path d="M52 98 L 68 102"/><path d="M50 114 L 66 116"/><path d="M188 98 L 172 102"/><path d="M190 114 L 174 116"/></g>
+        <ellipse cx="120" cy="134" rx="36" ry="24" fill="url(#creamCute)"/>
+        <g fill="#C46A20" opacity="0.45"><circle cx="102" cy="136" r="1.6"/><circle cx="96" cy="142" r="1.6"/><circle cx="104" cy="144" r="1.6"/><circle cx="138" cy="136" r="1.6"/><circle cx="144" cy="142" r="1.6"/><circle cx="136" cy="144" r="1.6"/></g>
+        <path d="M62 76 Q 80 62 102 72 M138 72 Q 160 62 178 76" fill="none" stroke="#C46A20" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+        <circle cx="84" cy="106" r="25" fill="#FFFDF8" stroke="#6B3E1A" stroke-width="2.6"/>
+        <circle cx="86" cy="108" r="17" fill="url(#pupilCute)"/>
+        <ellipse cx="79" cy="100" rx="7" ry="6" fill="#FFFFFF"/><circle cx="92" cy="115" r="3" fill="#FFFFFF" opacity="0.9"/>
+        <circle cx="156" cy="106" r="25" fill="#FFFDF8" stroke="#6B3E1A" stroke-width="2.6"/>
+        <circle cx="154" cy="108" r="17" fill="url(#pupilCute)"/>
+        <ellipse cx="147" cy="100" rx="7" ry="6" fill="#FFFFFF"/><circle cx="160" cy="115" r="3" fill="#FFFFFF" opacity="0.9"/>
+        <path d="M112 124 Q 120 118 128 124 Q 124 133 120 134 Q 116 133 112 124 Z" fill="#E98C94"/>
+        <ellipse cx="118" cy="123" rx="3" ry="1.5" fill="#FFFFFF" opacity="0.6"/>
+        <path d="M120 134 L 120 140 M120 140 Q 111 150 102 142 M120 140 Q 129 150 138 142" fill="none" stroke="#8A4B2A" stroke-width="2.4" stroke-linecap="round"/>
+        <g stroke="#B89472" stroke-width="1.5" stroke-linecap="round" opacity="0.65" fill="none"><path d="M92 138 L 36 124 M92 142 L 32 142 M94 146 L 40 162"/><path d="M148 138 L 204 124 M148 142 L 208 142 M146 146 L 200 162"/></g>
+        <g stroke="#FBD39B" stroke-width="2" stroke-linecap="round" opacity="0.8"><path d="M90 42 L 92 52"/><path d="M150 42 L 148 52"/><path d="M56 128 L 66 126"/><path d="M184 128 L 174 126"/></g>
+        <path d="M78 206 C 72 188, 82 174, 101 166" fill="none" stroke="#EE9A45" stroke-width="28" stroke-linecap="round"/>
+        <path d="M162 206 C 168 188, 158 174, 139 166" fill="none" stroke="#EE9A45" stroke-width="28" stroke-linecap="round"/>
+        <g stroke="#C46A20" stroke-width="5" stroke-linecap="round" opacity="0.6"><path d="M66 196 L 82 192"/><path d="M70 182 L 84 180"/><path d="M174 196 L 158 192"/><path d="M170 182 L 156 180"/></g>
+        <ellipse cx="102" cy="164" rx="15" ry="17" fill="url(#creamCute)" transform="rotate(-10 102 164)"/>
+        <ellipse cx="138" cy="164" rx="15" ry="17" fill="url(#creamCute)" transform="rotate(10 138 164)"/>
+        <path d="M96 156 L 97 166 M102 154 L 102 166 M108 156 L 107 166 M132 156 L 133 166 M138 154 L 138 166 M144 156 L 143 166" fill="none" stroke="#D9B48A" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>`;
 
-        function renderDiagram() {
-            const tasks = getTasksForCurrentDate();
-            const container = document.getElementById('diagramContainer');
-            container.innerHTML = '';
+    const sadCatSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300" role="img" aria-label="Smutné koťátko">
+        <defs>
+          <radialGradient id="furSad" cx="0.5" cy="0.3" r="0.8"><stop offset="0" stop-color="#F8BB6E"/><stop offset="0.6" stop-color="#EE9A45"/><stop offset="1" stop-color="#D87C2C"/></radialGradient>
+          <radialGradient id="creamSad" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#FFF6E6"/><stop offset="1" stop-color="#F7D9AE"/></radialGradient>
+          <radialGradient id="pupilSad" cx="0.4" cy="0.35" r="0.75"><stop offset="0" stop-color="#4A2E18"/><stop offset="1" stop-color="#100804"/></radialGradient>
+          <linearGradient id="earInSad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F8B7AE"/><stop offset="1" stop-color="#EE8E98"/></linearGradient>
+          <filter id="blurSad" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+          <clipPath id="eyeLSad"><circle cx="84" cy="108" r="25"/></clipPath>
+          <clipPath id="eyeRSad"><circle cx="156" cy="108" r="25"/></clipPath>
+        </defs>
+        <ellipse cx="120" cy="290" rx="78" ry="8" fill="#000000" opacity="0.14" filter="url(#blurSad)"/>
+        <path d="M176 266 C 214 280, 238 262, 234 236" fill="none" stroke="#EE9A45" stroke-width="30" stroke-linecap="round"/>
+        <path d="M200 276 L 206 260 M222 274 L 232 264" fill="none" stroke="#C46A20" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+        <path d="M234 246 C 235 242, 235 240, 234 236" fill="none" stroke="#8A4A1E" stroke-width="30" stroke-linecap="round"/>
+        <path d="M120 134 C 62 134, 44 202, 56 250 C 64 284, 176 284, 184 250 C 196 202, 178 134, 120 134 Z" fill="url(#furSad)"/>
+        <ellipse cx="120" cy="238" rx="32" ry="44" fill="url(#creamSad)"/>
+        <g stroke="#C46A20" stroke-width="7" stroke-linecap="round" opacity="0.6" fill="none"><path d="M58 208 Q 74 210 84 222"/><path d="M56 234 Q 74 236 84 248"/><path d="M182 208 Q 166 210 156 222"/><path d="M184 234 Q 166 236 156 248"/></g>
+        <ellipse cx="84" cy="280" rx="23" ry="12" fill="url(#creamSad)"/>
+        <ellipse cx="156" cy="280" rx="23" ry="12" fill="url(#creamSad)"/>
+        <ellipse cx="106" cy="274" rx="19" ry="11" fill="url(#creamSad)"/>
+        <ellipse cx="134" cy="274" rx="19" ry="11" fill="url(#creamSad)"/>
+        <path d="M99 280 L 99 274 M106 281 L 106 275 M113 280 L 113 274 M127 280 L 127 274 M134 281 L 134 275 M141 280 L 141 274" fill="none" stroke="#D9B48A" stroke-width="1.8" stroke-linecap="round"/>
+        <g transform="rotate(-16 70 92)"><path d="M56 96 L 44 32 L 108 62 Z" fill="#EE9A45" stroke="#EE9A45" stroke-width="8" stroke-linejoin="round"/><path d="M62 84 L 54 46 L 94 66 Z" fill="url(#earInSad)" stroke="url(#earInSad)" stroke-width="4" stroke-linejoin="round"/></g>
+        <g transform="rotate(16 170 92)"><path d="M184 96 L 196 32 L 132 62 Z" fill="#EE9A45" stroke="#EE9A45" stroke-width="8" stroke-linejoin="round"/><path d="M178 84 L 186 46 L 146 66 Z" fill="url(#earInSad)" stroke="url(#earInSad)" stroke-width="4" stroke-linejoin="round"/></g>
+        <path d="M50 116 L 28 130 L 48 132 L 32 148 L 54 144 L 42 160 L 66 150 Z" fill="#F2A453"/>
+        <path d="M190 116 L 212 130 L 192 132 L 208 148 L 186 144 L 198 160 L 174 150 Z" fill="#F2A453"/>
+        <ellipse cx="120" cy="106" rx="78" ry="66" fill="url(#furSad)"/>
+        <g stroke="#C46A20" stroke-width="6" stroke-linecap="round" opacity="0.6"><path d="M120 46 L 120 66"/><path d="M100 50 L 104 68"/><path d="M140 50 L 136 68"/><path d="M52 102 L 68 106"/><path d="M50 118 L 66 120"/><path d="M188 102 L 172 106"/><path d="M190 118 L 174 120"/></g>
+        <ellipse cx="120" cy="138" rx="36" ry="24" fill="url(#creamSad)"/>
+        <g fill="#C46A20" opacity="0.45"><circle cx="102" cy="140" r="1.6"/><circle cx="96" cy="146" r="1.6"/><circle cx="138" cy="140" r="1.6"/><circle cx="144" cy="146" r="1.6"/></g>
+        <circle cx="84" cy="108" r="25" fill="#FFFDF8"/>
+        <g clip-path="url(#eyeLSad)"><circle cx="85" cy="112" r="19" fill="url(#pupilSad)"/><ellipse cx="78" cy="104" rx="7.5" ry="6.5" fill="#FFFFFF"/><circle cx="92" cy="120" r="3.2" fill="#FFFFFF" opacity="0.9"/><polygon points="56,74 114,74 114,94 108,94 60,108 56,108" fill="#F0A050"/></g>
+        <circle cx="84" cy="108" r="25" fill="none" stroke="#6B3E1A" stroke-width="2.6"/>
+        <path d="M60 108 L 108 94" fill="none" stroke="#6B3E1A" stroke-width="3.2" stroke-linecap="round"/>
+        <circle cx="156" cy="108" r="25" fill="#FFFDF8"/>
+        <g clip-path="url(#eyeRSad)"><circle cx="155" cy="112" r="19" fill="url(#pupilSad)"/><ellipse cx="148" cy="104" rx="7.5" ry="6.5" fill="#FFFFFF"/><circle cx="162" cy="120" r="3.2" fill="#FFFFFF" opacity="0.9"/><polygon points="184,74 126,74 126,94 132,94 180,108 184,108" fill="#F0A050"/></g>
+        <circle cx="156" cy="108" r="25" fill="none" stroke="#6B3E1A" stroke-width="2.6"/>
+        <path d="M180 108 L 132 94" fill="none" stroke="#6B3E1A" stroke-width="3.2" stroke-linecap="round"/>
+        <path d="M62 84 Q 86 78 112 66 M178 84 Q 154 78 128 66" fill="none" stroke="#C46A20" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+        <path d="M68 132 C 63 142, 65 148, 70 148 C 75 148, 76 142, 70 132 Z" fill="#BFE3F7" opacity="0.9"/>
+        <ellipse cx="69" cy="141" rx="1.8" ry="2.8" fill="#FFFFFF" opacity="0.9"/>
+        <path d="M112 128 Q 120 122 128 128 Q 124 137 120 138 Q 116 137 112 128 Z" fill="#E98C94"/>
+        <ellipse cx="118" cy="127" rx="3" ry="1.5" fill="#FFFFFF" opacity="0.6"/>
+        <path d="M120 138 L 120 144 M104 154 Q 112 144 120 144 Q 128 144 136 154" fill="none" stroke="#8A4B2A" stroke-width="2.4" stroke-linecap="round"/>
+        <g stroke="#B89472" stroke-width="1.5" stroke-linecap="round" opacity="0.65" fill="none"><path d="M92 142 L 36 136 M92 146 L 32 156 M94 150 L 40 176"/><path d="M148 142 L 204 136 M148 146 L 208 156 M146 150 L 200 176"/></g>
+        <g stroke="#FBD39B" stroke-width="2" stroke-linecap="round" opacity="0.8"><path d="M90 46 L 92 56"/><path d="M150 46 L 148 56"/><path d="M56 132 L 66 130"/><path d="M184 132 L 174 130"/></g>
+      </svg>`;
 
-            // Najdeme první nesplněný úkol (aktivní)
-            let activeIndex = tasks.findIndex(t => !t.completed);
-            if (activeIndex === -1 && tasks.length > 0) {
-                activeIndex = tasks.length - 1; // Všechny splněny, ukážeme poslední
-            }
+    const happyCatSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 300" role="img" aria-label="Šťastné koťátko">
+        <defs>
+          <radialGradient id="furHappy" cx="0.5" cy="0.3" r="0.8"><stop offset="0" stop-color="#F8BB6E"/><stop offset="0.6" stop-color="#EE9A45"/><stop offset="1" stop-color="#D87C2C"/></radialGradient>
+          <radialGradient id="creamHappy" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#FFF6E6"/><stop offset="1" stop-color="#F7D9AE"/></radialGradient>
+          <linearGradient id="earInHappy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F8B7AE"/><stop offset="1" stop-color="#EE8E98"/></linearGradient>
+          <filter id="blurHappy" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+        </defs>
+        <ellipse cx="120" cy="292" rx="78" ry="8" fill="#2F5F2A" opacity="0.2" filter="url(#blurHappy)"/>
+        <path d="M176 262 C 230 268, 244 200, 214 160" fill="none" stroke="#EE9A45" stroke-width="30" stroke-linecap="round"/>
+        <path d="M198 268 L 210 248 M232 232 L 244 222" fill="none" stroke="#C46A20" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+        <path d="M218 176 C 214 168, 212 164, 212 156" fill="none" stroke="#8A4A1E" stroke-width="30" stroke-linecap="round"/>
+        <path d="M72 204 C 48 206, 30 196, 24 172" fill="none" stroke="#EE9A45" stroke-width="26" stroke-linecap="round"/>
+        <path d="M168 204 C 192 206, 210 196, 216 172" fill="none" stroke="#EE9A45" stroke-width="26" stroke-linecap="round"/>
+        <ellipse cx="24" cy="168" rx="15" ry="17" fill="url(#creamHappy)"/>
+        <ellipse cx="216" cy="168" rx="15" ry="17" fill="url(#creamHappy)"/>
+        <path d="M18 160 L 19 170 M24 158 L 24 170 M30 160 L 29 170 M210 160 L 211 170 M216 158 L 216 170 M222 160 L 221 170" fill="none" stroke="#D9B48A" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M120 130 C 62 130, 44 200, 56 250 C 64 284, 176 284, 184 250 C 196 200, 178 130, 120 130 Z" fill="url(#furHappy)"/>
+        <ellipse cx="120" cy="236" rx="32" ry="44" fill="url(#creamHappy)"/>
+        <g stroke="#C46A20" stroke-width="7" stroke-linecap="round" opacity="0.6" fill="none"><path d="M58 214 Q 74 216 84 228"/><path d="M182 214 Q 166 216 156 228"/></g>
+        <ellipse cx="86" cy="282" rx="23" ry="12" fill="url(#creamHappy)"/>
+        <ellipse cx="154" cy="282" rx="23" ry="12" fill="url(#creamHappy)"/>
+        <path d="M78 289 L 78 282 M86 290 L 86 283 M94 289 L 94 282 M146 289 L 146 282 M154 290 L 154 283 M162 289 L 162 282" fill="none" stroke="#D9B48A" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M56 92 L 46 28 L 108 58 Z" fill="#EE9A45" stroke="#EE9A45" stroke-width="8" stroke-linejoin="round"/>
+        <path d="M184 92 L 194 28 L 132 58 Z" fill="#EE9A45" stroke="#EE9A45" stroke-width="8" stroke-linejoin="round"/>
+        <path d="M62 80 L 56 42 L 94 62 Z" fill="url(#earInHappy)" stroke="url(#earInHappy)" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M178 80 L 184 42 L 146 62 Z" fill="url(#earInHappy)" stroke="url(#earInHappy)" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M50 112 L 28 124 L 48 128 L 32 142 L 54 140 L 42 154 L 66 146 Z" fill="#F2A453"/>
+        <path d="M190 112 L 212 124 L 192 128 L 208 142 L 186 140 L 198 154 L 174 146 Z" fill="#F2A453"/>
+        <ellipse cx="120" cy="102" rx="78" ry="66" fill="url(#furHappy)"/>
+        <g stroke="#C46A20" stroke-width="6" stroke-linecap="round" opacity="0.6"><path d="M120 42 L 120 62"/><path d="M100 46 L 104 64"/><path d="M140 46 L 136 64"/><path d="M52 98 L 68 102"/><path d="M50 114 L 66 116"/><path d="M188 98 L 172 102"/><path d="M190 114 L 174 116"/></g>
+        <ellipse cx="120" cy="134" rx="36" ry="24" fill="url(#creamHappy)"/>
+        <path d="M62 104 Q 84 80 106 104" fill="none" stroke="#5A2E12" stroke-width="5" stroke-linecap="round"/>
+        <path d="M134 104 Q 156 80 178 104" fill="none" stroke="#5A2E12" stroke-width="5" stroke-linecap="round"/>
+        <path d="M64 72 Q 84 58 104 70 M136 70 Q 156 58 176 72" fill="none" stroke="#C46A20" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+        <ellipse cx="60" cy="128" rx="12" ry="7" fill="#F28C9B" opacity="0.5"/>
+        <ellipse cx="180" cy="128" rx="12" ry="7" fill="#F28C9B" opacity="0.5"/>
+        <path d="M112 122 Q 120 116 128 122 Q 124 131 120 132 Q 116 131 112 122 Z" fill="#E98C94"/>
+        <ellipse cx="118" cy="121" rx="3" ry="1.5" fill="#FFFFFF" opacity="0.6"/>
+        <path d="M120 132 L 120 136" fill="none" stroke="#8A4B2A" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M100 138 Q 120 176 140 138 Z" fill="#B8475A" stroke="#8A4B2A" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M110 158 Q 120 150 130 158 Q 120 168 110 158 Z" fill="#F28C9B"/>
+        <g stroke="#B89472" stroke-width="1.5" stroke-linecap="round" opacity="0.65" fill="none"><path d="M90 136 L 36 120 M90 140 L 32 138 M92 144 L 40 158"/><path d="M150 136 L 204 120 M150 140 L 208 138 M148 144 L 200 158"/></g>
+        <g stroke="#FBD39B" stroke-width="2" stroke-linecap="round" opacity="0.8"><path d="M90 42 L 92 52"/><path d="M150 42 L 148 52"/></g>
+      </svg>`;
 
-            const prevIndex = activeIndex - 1;
-            const nextIndex = activeIndex + 1;
+    function bootstrap() {
+      initState();
+      attachEvents();
+      renderList();
+      renderDiagram();
+      showList();
+      updateAddButtonState();
+    }
 
-            const renderBubbleIndex = (idx, type) => {
-                if (idx < 0 || idx >= tasks.length) return;
-                const task = tasks[idx];
-
-                const bubble = document.createElement('div');
-                let className = 'bubble';
-                if (type === 'prev') className += ' completed-bubble';
-                else if (type === 'active') className += ' active-bubble';
-                else if (type === 'next') className += ' pending-bubble';
-                bubble.className = className;
-
-                let displayText = task.shortTitle || task.text;
-                if (displayText.length > 40) {
-                    displayText = displayText.substring(0, 38) + '…';
-                }
-
-                bubble.innerHTML = `
-                    <div class="crossout-line" style="background-color: ${task.strokeColor};"></div>
-                    <div class="bubble-text">${escapeHtml(displayText)}</div>
-                `;
-
-                // Interakce: Dlouhé podržení pro aktivní (splnění), klepnutí pro předchozí (zrušení splnění)
-                if (type === 'active') {
-                    let pressTimer;
-                    bubble.addEventListener('pointerdown', () => {
-                        pressTimer = setTimeout(() => {
-                            completeTask(task.id);
-                        }, 600); // 600ms podržení
-                    });
-                    bubble.addEventListener('pointerup', () => clearTimeout(pressTimer));
-                    bubble.addEventListener('pointerleave', () => clearTimeout(pressTimer));
-                } else if (type === 'prev') {
-                    bubble.addEventListener('click', () => {
-                        uncompleteTask(task.id);
-                    });
-                }
-
-                container.appendChild(bubble);
-            };
-
-            if (prevIndex >= 0) {
-                renderBubbleIndex(prevIndex, 'prev');
-                container.appendChild(createArrow(true));
-            }
-
-            if (activeIndex >= 0 && activeIndex < tasks.length) {
-                renderBubbleIndex(activeIndex, 'active');
-            }
-
-            if (nextIndex < tasks.length) {
-                container.appendChild(createArrow(false));
-                renderBubbleIndex(nextIndex, 'next');
-            }
-
-            // Kontrola zda jsou všechny splněny
-            if (tasks.length > 0 && tasks.every(t => t.completed)) {
-                showReward('free');
-            }
-        }
-
-        function createArrow(isActive) {
-            const arrow = document.createElement('div');
-            arrow.className = `arrow-down ${isActive ? 'active' : ''}`;
-            arrow.innerHTML = '↓';
-            return arrow;
-        }
-
-        function completeTask(id) {
-            const tasks = getTasksForCurrentDate();
-            const task = tasks.find(t => t.id === id);
-            if (!task) return;
-
-            task.completed = true;
-            task.completedAt = new Date().toISOString();
-
-            // 50% šance na odměnu proud_cat, pokud ještě nebyla zobrazena
-            let showProud = false;
-            if (!task.rewardShown && Math.random() < 0.5) {
-                task.rewardShown = true;
-                showProud = true;
-            }
-
-            saveTasksForCurrentDate(tasks);
-            renderDiagram();
-
-            if (showProud) {
-                showReward('proud');
-            }
-        }
-
-        function uncompleteTask(id) {
-            const tasks = getTasksForCurrentDate();
-            const task = tasks.find(t => t.id === id);
-            if (!task) return;
-
-            task.completed = false;
-            let showFrustrated = false;
-
-            if (task.rewardShown) {
-                task.rewardShown = false;
-                showFrustrated = true;
-            }
-
-            saveTasksForCurrentDate(tasks);
-            renderDiagram();
-
-            if (showFrustrated) {
-                showReward('frustrated');
-            }
-        }
-
-        function showReward(type) {
-            const overlay = document.getElementById('rewardOverlay');
-            const img = document.getElementById('rewardImg');
-            const text = document.getElementById('rewardText');
-
-            if (type === 'proud') {
-                img.src = CATS.proud;
-                text.textContent = "Skvělá práce, jsi úžasná! ✨";
-            } else if (type === 'frustrated') {
-                img.src = CATS.frustrated;
-                text.textContent = "Vráceno zpět... ouha! 😿";
-            } else if (type === 'free') {
-                img.src = CATS.free;
-                text.textContent = "Vše hotovo, zasloužený odpočinek! 🌸";
-            }
-
-            overlay.classList.add('show');
-            setTimeout(() => {
-                overlay.classList.remove('show');
-            }, 4000);
-        }
-
-        // Zálohování a obnova
-        function openMenu() {
-            document.getElementById('settingsModal').classList.add('open');
-        }
-
-        function closeMenu() {
-            document.getElementById('settingsModal').classList.remove('open');
-        }
-
-        function generateBackup() {
-            const data = localStorage.getItem('ukolnicek_data') || '{}';
-            document.getElementById('backupText').value = data;
-        }
-
-        function restoreBackup() {
-            const text = document.getElementById('backupText').value.trim();
-            try {
-                const parsed = JSON.parse(text);
-                if (parsed && parsed.tasks) {
-                    localStorage.setItem('ukolnicek_data', JSON.stringify(parsed));
-                    alert("Data byla úspěšně obnovena!");
-                    closeMenu();
-                    renderTasks();
-                } else {
-                    alert("Neplatný formát zálohy.");
-                }
-            } catch (e) {
-                alert("Chyba při parsování JSON.");
-            }
-        }
-
-        // Spuštění
-        initApp();
-    </script>
+    bootstrap();
+  </script>
 </body>
-</html>
